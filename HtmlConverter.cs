@@ -53,7 +53,7 @@ namespace HtmlToGmi
         /// </summary>
         int listDepth = 0;
 
-        Buffer buffer = new Buffer();
+        GemtextBuffer buffer = new GemtextBuffer();
         MediaConverter mediaConverter;
 
         bool inPreformatted = false;
@@ -120,7 +120,7 @@ namespace HtmlToGmi
                 //if its not only whitespace add it.
                 if (textNode.TextContent.Trim().Length > 0)
                 {
-                    var text = StringUtils.RemoveNewlines(textNode.TextContent);
+                    var text = TextConverter.CollapseWhitespace(textNode.TextContent);
                     if (buffer.AtLineStart)
                     {
                         buffer.Append(text.TrimStart());

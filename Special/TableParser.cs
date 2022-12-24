@@ -9,6 +9,7 @@ using AngleSharp;
 using AngleSharp.Html.Parser;
 using AngleSharp.Html.Dom;
 using AngleSharp.Dom;
+using System.Reflection.Emit;
 
 namespace HtmlToGmi.Special
 {
@@ -16,14 +17,14 @@ namespace HtmlToGmi.Special
     {
         Row currRow;
         Table table;
-        TextExtractor textExtractor;
+        TextConverter textExtractor;
         //used when adding row/colspans to fix mismatched tables
         int currRowWidth;
 
         public TableParser()
         {
             table = new Table();
-            textExtractor = new TextExtractor
+            textExtractor = new TextConverter
             {
                 ShouldConvertImages = true,
                 ShouldCollapseNewlines = true
@@ -48,8 +49,7 @@ namespace HtmlToGmi.Special
             switch(current.NodeName.ToLower())
             {
                 case "caption":
-                    textExtractor.Extract(current);
-                    table.Caption = textExtractor.Content;
+                    table.Caption = textExtractor.Convert(current);
                     break;
 
                 case "tr":
@@ -86,13 +86,10 @@ namespace HtmlToGmi.Special
         {
             if (currRow != null)
             {
-                textExtractor.Extract(cell);
-                string contents = textExtractor.Content;
-
                 currRow.Cells.Add(new Cell
                 {
                     IsHeader = (cell.NodeName == "TH"),
-                    Contents = contents,
+                    Contents = textExtractor.Convert(cell),
                     ColSpan = ParseSpan(cell.GetAttribute("colspan")),
                     RowSpan = ParseSpan(cell.GetAttribute("rowspan")),
                     IsRowSpanHolder = false

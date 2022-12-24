@@ -4,44 +4,38 @@ using System.Text.RegularExpressions;
 using AngleSharp.Html.Dom;
 using AngleSharp.Dom;
 
-namespace HtmlToGmi.Special
+using HtmlToGmi.Models;
+
+namespace HtmlToGmi
 { 
     /// <summary>
     /// Extracts text
     /// </summary>
-    public class TextExtractor
+    public class TextConverter
     {
-        public string Content
-            => ShouldCollapseNewlines ?
-                        CollapseNewlines(buffer.Content) :
-                        buffer.Content;
-
         public bool ShouldCollapseNewlines { get; set; } = false;
         public bool ShouldConvertImages { get; set; } = false;
-
-        //sets the character we use for newline replacement
-        public string NewlineReplacement { get; set; } = " ";
 
         private static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
         private GemtextBuffer buffer = new GemtextBuffer();
 
-        public void Extract(params INode[] nodes)
-            => Extract(nodes.Where(x => x != null).FirstOrDefault());
-
-        public void Extract(INode current)
+        public string Convert(INode current)
         {
             buffer.Reset();
-            if (current == null)
-            {
-                //nothing to do
-                return;
-            }
             ExtractInnerTextHelper(current);
+            return ShouldCollapseNewlines?
+                CollapseWhitespace(buffer.Content) :
+                buffer.Content;
         }
 
         private void ExtractInnerTextHelper(INode current)
         {
+            if(current == null)
+            {
+                return;
+            }
+
             switch (current.NodeType)
             {
                 case NodeType.Text:
@@ -91,9 +85,7 @@ namespace HtmlToGmi.Special
                                 break;
 
                             default:
-                                //TODO: FIX
-                                //if (HtmlTagParser.ShouldDisplayAsBlock(element))
-                                if (true)
+                                if (HtmlConverter.ShouldDisplayAsBlock(element))
                                 {
                                     buffer.EnsureAtLineStart();
                                     ExtractChildrenText(current);
@@ -113,17 +105,6 @@ namespace HtmlToGmi.Special
         private void ExtractChildrenText(INode element)
             => element.ChildNodes.ToList().ForEach(x => ExtractInnerTextHelper(x));
 
-        //converts newlines to spaces. since that can create runs of whitespace,
-        //remove those is they exist
-        private string CollapseNewlines(string s)
-            => CollapseSpaces(ConvertNewlines(s));
-
-        private string ConvertNewlines(string s)
-            => s.Replace("\n", NewlineReplacement).Trim();
-
-        private string CollapseSpaces(string s)
-            => whitespace.Replace(s, " ");
-
         private string ConvertImage(HtmlElement element)
         {
             var alt = element.GetAttribute("alt");
@@ -134,6 +115,22 @@ namespace HtmlToGmi.Special
             return !string.IsNullOrEmpty(alt) ?
                 $"[Image: {alt}] " :
                 "";
+        }
+
+        /// <summary>
+        /// Removes \r, \n, and collapses runs of white space
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string CollapseWhitespace(string text)
+        {
+            if (text.Length > 0 && (text.Contains('\n') || text.Contains('\r')))
+            {
+                text = text.Replace('\r', ' ');
+                text = text.Replace('\n', ' ');
+                text = whitespace.Replace(text, " ");
+            }
+            return text;
         }
     }
 }

@@ -78,14 +78,14 @@ namespace HtmlToGmi.Special
         private string GetAlt(IElement img)
         {
             var caption = img.GetAttribute("alt") ?? "";
-            caption = caption.Trim();
+            caption = TextConverter.CollapseWhitespace(caption);
             return caption.Length > 0 ? caption : "Article Image";
         }
 
         private string GetFigCaption(IElement figure)
             //TODO: I think this should handle the HTNL decoding as well?
             //maybe "textContent" already does that
-            => StringUtils.RemoveNewlines(figure.QuerySelector("figcaption")?.TextContent ?? "");
+            => TextConverter.CollapseWhitespace(figure.QuerySelector("figcaption")?.TextContent ?? "");
 
         private Uri GetUrl(IElement img)
         {
