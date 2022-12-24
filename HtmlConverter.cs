@@ -408,7 +408,7 @@ namespace HtmlToGmi
             {
                 Images.Add(image);
                 buffer.EnsureAtLineStart();
-                buffer.AppendLine($"=> {GetImagePath(image.Source)} Image: {image.Caption}");
+                buffer.AppendLine($"=> {GetImageUrl(image.Source)} Image: {image.Caption}");
             }
         }
 
