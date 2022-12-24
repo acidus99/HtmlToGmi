@@ -26,17 +26,31 @@ namespace HtmlToGmi
         /// <summary>
         /// Optional function to call which rewrites any anchor tag hyperlinks the converter outputs
         /// </summary>
-        public UrlRewrite HyperlinkRewriteCallback { get; set; }
+        public UrlRewrite AnchorRewriteCallback { get; set; }
 
         /// <summary>
         /// Optional function to call which rewrites any image hyperlinks the converter outputs
         /// </summary>
         public UrlRewrite ImageRewriteCallback { get; set; }
 
+        /// <summary>
+        /// All images found in the converted text
+        /// </summary>
         List<Image> Images = new List<Image>();
+
+        /// <summary>
+        /// tmp buffer used to hold links in the current block of text
+        /// </summary>
         List<Hyperlink> linkBuffer = new List<Hyperlink>();
+
+        /// <summary>
+        /// Unique, "best", list of anchor hyperlinks found in the converted text
+        /// </summary>
         LinkCollection BodyLinks = new LinkCollection();
 
+        /// <summary>
+        /// tracks how deep we are in a nested list
+        /// </summary>
         int listDepth = 0;
 
         Buffer buffer = new Buffer();
@@ -67,7 +81,7 @@ namespace HtmlToGmi
                 buffer.EnsureAtLineStart();
                 foreach (var link in linkBuffer)
                 {
-                    buffer.AppendLine($"=> {link.Url.AbsoluteUri} [{link.OrderDetected}] {link.Text}");
+                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} [{link.OrderDetected}] {link.Text}");
                 }
                 linkBuffer.Clear();
             }
@@ -394,7 +408,7 @@ namespace HtmlToGmi
             {
                 Images.Add(image);
                 buffer.EnsureAtLineStart();
-                buffer.AppendLine($"=> {GetMediaPath(image.Source)} Image: {image.Caption}");
+                buffer.AppendLine($"=> {GetImagePath(image.Source)} Image: {image.Caption}");
             }
         }
 
@@ -536,15 +550,16 @@ namespace HtmlToGmi
             };
         }
 
-        private string GetMediaPath(Uri url)
-        {
-            if(ImageRewriteCallback != null)
-            {
-                return ImageRewriteCallback(url);
-            }
-            return url.AbsoluteUri;
-        }
-            
+        private string GetImageUrl(Uri url)
+            => (ImageRewriteCallback != null) ?
+                ImageRewriteCallback(url) :
+                url.AbsoluteUri;
+
+        private string GetAnchorUrl(Uri url)
+            => (AnchorRewriteCallback != null) ?
+                AnchorRewriteCallback(url) :
+                url.AbsoluteUri;
+
         private static bool IsInline(HtmlElement element)
             => element.GetAttribute("style")?.Contains("display:inline") ?? false;
     }
