@@ -542,15 +542,30 @@ namespace HtmlToGmi
         private Hyperlink CreateLink(HtmlElement a)
         {
             Uri url = null;
+            var href = a.GetAttribute("href") ?? "";
+
+            //Skip navigation links to parts of the same page
+            if (href.StartsWith('#'))
+            {
+                return null;
+            }
+
+            //only allow valid, fully qualified URLs
             try
             {
-                url = new Uri(a.GetAttribute("href"));
+                url = new Uri(BaseUrl, href);
             }
             catch (Exception)
             {
                 url = null;
             }
-            if (url == null)
+            if (url == null || !url.IsAbsoluteUri)
+            {
+                return null;
+            }
+
+            //ignore JS links, since those won't do anything in a Gemini client
+            if(url.Scheme == "javascript")
             {
                 return null;
             }
