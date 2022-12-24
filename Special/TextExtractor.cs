@@ -24,7 +24,7 @@ namespace HtmlToGmi.Special
 
         private static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
-        private Buffer buffer = new Buffer();
+        private GemtextBuffer buffer = new GemtextBuffer();
 
         public void Extract(params INode[] nodes)
             => Extract(nodes.Where(x => x != null).FirstOrDefault());

@@ -5,7 +5,13 @@ using HtmlToGmi.Models;
 
 namespace HtmlToGmi
 {
-    public class Buffer
+    /// <summary>
+    /// Gemtext-aware text buffer. Ensures that:excessives
+    /// - excessive new lines are collapsed
+    /// - preformatted text is preserved
+    /// - proper start of the line type is used (header, list, etc)
+    /// </summary>
+    public class GemtextBuffer
     {
         public string Content => sb.ToString();
 
@@ -20,7 +26,7 @@ namespace HtmlToGmi
 
         private string lineStart = null;
 
-        public Buffer()
+        public GemtextBuffer()
         {
             sb = new StringBuilder();
         }
