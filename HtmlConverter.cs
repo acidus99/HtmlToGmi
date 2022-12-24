@@ -101,7 +101,7 @@ namespace HtmlToGmi
                 buffer.EnsureAtLineStart();
                 foreach (var link in linkBuffer)
                 {
-                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} [{link.OrderDetected}] {link.Text}");
+                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. ({link.Url.Host}) \"{link.Text}\"");
                 }
                 linkBuffer.Clear();
             }
