@@ -10,6 +10,9 @@ using HtmlToGmi.Special;
 
 namespace HtmlToGmi
 {
+
+    public delegate string UrlRewrite(Uri url);
+
     /// <summary>
     /// Converts HTML into Gemtext
     /// </summary>
@@ -19,6 +22,16 @@ namespace HtmlToGmi
 
         public bool ShouldRenderHyperlinks { get; set; } = true;
         public bool AllowDuplicateLinks { get; set; } = false;
+
+        /// <summary>
+        /// Optional function to call which rewrites any anchor tag hyperlinks the converter outputs
+        /// </summary>
+        public UrlRewrite HyperlinkRewriteCallback { get; set; }
+
+        /// <summary>
+        /// Optional function to call which rewrites any image hyperlinks the converter outputs
+        /// </summary>
+        public UrlRewrite ImageRewriteCallback { get; set; }
 
         List<Image> Images = new List<Image>();
         List<Hyperlink> linkBuffer = new List<Hyperlink>();
@@ -164,7 +177,6 @@ namespace HtmlToGmi
                     ProcessFigure(element);
                     break;
 
-
                 case "h1":
                     buffer.EnsureAtLineStart();
                     buffer.SetLineStart("# ");
@@ -255,7 +267,6 @@ namespace HtmlToGmi
                     break;
 
                 //skipping
-
                 case "noscript":
                 case "script":
                 case "head":
@@ -263,7 +274,6 @@ namespace HtmlToGmi
                 case "link":
                 case "style":
                 case "svg":
-
                     return;
 
                 default:
@@ -533,9 +543,14 @@ namespace HtmlToGmi
         }
 
         private string GetMediaPath(Uri url)
-            //TODO: FIX THIS!
-            => url.AbsoluteUri;
-
+        {
+            if(ImageRewriteCallback != null)
+            {
+                return ImageRewriteCallback(url);
+            }
+            return url.AbsoluteUri;
+        }
+            
         private static bool IsInline(HtmlElement element)
             => element.GetAttribute("style")?.Contains("display:inline") ?? false;
     }
