@@ -15,9 +15,9 @@ namespace HtmlToGmi.Models
         int counter = 0;
 
         public void AddLink(Hyperlink link)
-            => AddLink(link.Url, link.Text);
+            => AddLink(link.Url, link.Text, link.IsExternal);
 
-        public void AddLink(Uri url, string linkText)
+        public void AddLink(Uri url, string linkText, bool isExternal)
         {
             string normalized = linkText.ToLower();
 
@@ -35,7 +35,8 @@ namespace HtmlToGmi.Models
                     {
                         Text = linkText,
                         Url = url,
-                        OrderDetected = counter
+                        OrderDetected = counter,
+                        IsExternal = isExternal
                     });
                 }
             }

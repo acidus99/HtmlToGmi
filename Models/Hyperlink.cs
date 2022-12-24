@@ -6,6 +6,7 @@ namespace HtmlToGmi.Models
 		public int OrderDetected { get; set; } = 0;
         public Uri Url { get; init; }
 		public string Text { get; set; }
+		public bool IsExternal { get; set; }
 
 		public int Size
 			=> Url.AbsoluteUri.Length + Text.Length + 5;

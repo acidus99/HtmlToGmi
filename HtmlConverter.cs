@@ -57,6 +57,7 @@ namespace HtmlToGmi
 
         GemtextBuffer buffer = new GemtextBuffer();
         MediaConverter mediaConverter;
+        Uri BaseUrl;
 
         bool inPreformatted = false;
 
@@ -74,6 +75,7 @@ namespace HtmlToGmi
         public ConvertedContent Convert(Uri url, INode current)
         {
             mediaConverter = new MediaConverter(url);
+            BaseUrl = url;
             ConvertNode(current);
             FlushLinkBuffer();
             return new ConvertedContent
@@ -564,9 +566,13 @@ namespace HtmlToGmi
             {
                 OrderDetected = linkCounter,
                 Text = a.TextContent.Trim(),
-                Url = url
+                Url = url,
+                IsExternal = IsExternalLink(url)
             };
         }
+
+        private bool IsExternalLink(Uri url)
+            => url.Host.EndsWith(BaseUrl.Host);
 
         private string GetImageUrl(Uri url)
             => (ImageRewriteCallback != null) ?
