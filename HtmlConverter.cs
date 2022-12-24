@@ -383,24 +383,18 @@ namespace HtmlToGmi
         }
 
         private void ProcessFigure(HtmlElement figure)
-        {
-            var media = mediaConverter.ConvertFigure(figure);
-            if (media != null && ShouldUseImage(media))
-            {
-                Images.Add(media);
-                buffer.EnsureAtLineStart();
-                buffer.AppendLine($"=> {GetMediaPath(media.Source)} Image: {media.Caption}");
-            }
-        }
+            => HandleImage(mediaConverter.ConvertFigure(figure));
 
         private void ProcessImg(HtmlElement img)
+            => HandleImage(mediaConverter.ConvertImg(img));
+
+        private void HandleImage(Image image)
         {
-            var media = mediaConverter.ConvertImg(img);
-            if (media != null && ShouldUseImage(media))
+            if (image != null && ShouldUseImage(image))
             {
-                Images.Add(media);
+                Images.Add(image);
                 buffer.EnsureAtLineStart();
-                buffer.AppendLine($"=> {GetMediaPath(media.Source)} Image: {media.Caption}");
+                buffer.AppendLine($"=> {GetMediaPath(image.Source)} Image: {image.Caption}");
             }
         }
 
