@@ -8,9 +8,16 @@ using HtmlToGmi.Models;
 
 namespace HtmlToGmi.Special
 {
-    public static class MediaConverter
+    public class MediaConverter
     {
-        private static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
+        static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
+
+        Uri BaseUrl;
+
+        public MediaConverter(Uri basePageUrl)
+        {
+            BaseUrl = basePageUrl;
+        }
 
         /// <summary>
         /// Attempts to convert an IMG tag into a Image using
@@ -18,7 +25,7 @@ namespace HtmlToGmi.Special
         /// </summary>
         /// <param name="img"></param>
         /// <returns></returns>
-        public static Image ConvertImg(HtmlElement img)
+        public Image ConvertImg(HtmlElement img)
         {
             var url = GetUrl(img);
             if(url == null)
@@ -28,7 +35,7 @@ namespace HtmlToGmi.Special
             return new Image
             {
                 Caption = GetAlt(img),
-                Source = new Uri(url)
+                Source = url
             };
         }
 
@@ -39,7 +46,7 @@ namespace HtmlToGmi.Special
         /// </summary>
         /// <param name="figure"></param>
         /// <returns></returns>
-        public static Image ConvertFigure(HtmlElement figure)
+        public Image ConvertFigure(HtmlElement figure)
         {
             var img = figure.QuerySelector("img");
             //can't find an image? Nothing we can do
@@ -58,37 +65,48 @@ namespace HtmlToGmi.Special
             return new Image
             {
                 Caption = FindCaption(figure, img),
-                Source = new Uri(url)
+                Source = url
             };
         }
 
-        private static string FindCaption(IElement figure, IElement img)
+        private string FindCaption(IElement figure, IElement img)
         {
             var ret = GetFigCaption(figure);
             return (ret.Length > 0) ? ret : GetAlt(img);
         }
 
-        private static string GetAlt(IElement img)
+        private string GetAlt(IElement img)
         {
             var caption = img.GetAttribute("alt") ?? "";
             caption = caption.Trim();
             return caption.Length > 0 ? caption : "Article Image";
         }
 
-        private static string GetFigCaption(IElement figure)
+        private string GetFigCaption(IElement figure)
             //TODO: I think this should handle the HTNL decoding as well?
             //maybe "textContent" already does that
             => StringUtils.RemoveNewlines(figure.QuerySelector("figcaption")?.TextContent ?? "");
 
-        private static string GetUrl(IElement img)
+        private Uri GetUrl(IElement img)
         {
-            //older sits using non-native lazy loading will have source as a data-src attribute
-            var url = img.GetAttribute("data-src");
-            if(string.IsNullOrEmpty(url))
+            try
             {
-                url = img.GetAttribute("src");
+                //older sites using non-native lazy loading will have source as a data-src attribute
+                var url = img.GetAttribute("data-src");
+                if (string.IsNullOrEmpty(url))
+                {
+                    url = img.GetAttribute("src");
+                }
+                if (string.IsNullOrEmpty(url))
+                {
+                    return null;
+                }
+                return new Uri(BaseUrl, url);
             }
-            return url;
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

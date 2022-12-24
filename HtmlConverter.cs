@@ -27,6 +27,7 @@ namespace HtmlToGmi
         int listDepth = 0;
 
         Buffer buffer = new Buffer();
+        MediaConverter mediaConverter;
 
         bool inPreformatted = false;
 
@@ -34,6 +35,7 @@ namespace HtmlToGmi
 
         public ConvertedContent Convert(Uri url, INode current)
         {
+            mediaConverter = new MediaConverter(url);
             ConvertNode(current);
             FlushLinkBuffer();
             return new ConvertedContent
@@ -372,7 +374,7 @@ namespace HtmlToGmi
 
         private void ProcessFigure(HtmlElement figure)
         {
-            var media = MediaConverter.ConvertFigure(figure);
+            var media = mediaConverter.ConvertFigure(figure);
             if (media != null && ShouldUseImage(media))
             {
                 Images.Add(media);
@@ -383,7 +385,7 @@ namespace HtmlToGmi
 
         private void ProcessImg(HtmlElement img)
         {
-            var media = MediaConverter.ConvertImg(img);
+            var media = mediaConverter.ConvertImg(img);
             if (media != null && ShouldUseImage(media))
             {
                 Images.Add(media);
