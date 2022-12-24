@@ -11,7 +11,7 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Dom;
 using System.Reflection.Emit;
 
-namespace HtmlToGmi.Special
+namespace HtmlToGmi.Html
 {
     public class TableParser
     {

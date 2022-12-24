@@ -6,7 +6,7 @@ using AngleSharp.Dom;
 
 using HtmlToGmi.Filter;
 using HtmlToGmi.Models;
-using HtmlToGmi.Special;
+using HtmlToGmi.Html;
 
 namespace HtmlToGmi
 {

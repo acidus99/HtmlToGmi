@@ -6,7 +6,7 @@ using AngleSharp.Dom;
 
 using HtmlToGmi.Models;
 
-namespace HtmlToGmi.Special
+namespace HtmlToGmi.Html
 {
     public class MediaConverter
     {

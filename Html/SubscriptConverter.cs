@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-namespace HtmlToGmi.Special
+namespace HtmlToGmi.Html
 {
 	public class SubscriptConverter
 	{

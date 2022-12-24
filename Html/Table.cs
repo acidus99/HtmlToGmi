@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
-namespace HtmlToGmi.Special
+namespace HtmlToGmi.Html
 {
 
     public class Table
