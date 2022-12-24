@@ -7,6 +7,8 @@ using AngleSharp.Dom;
 using HtmlToGmi.Filter;
 using HtmlToGmi.Models;
 using HtmlToGmi.Html;
+using AngleSharp;
+using AngleSharp.Html.Parser;
 
 namespace HtmlToGmi
 {
@@ -60,6 +62,15 @@ namespace HtmlToGmi
 
         int linkCounter = 0;
 
+        public ConvertedContent Convert(string url, string html)
+            => Convert(new Uri(url), html);
+
+        public ConvertedContent Convert(Uri url, string html)
+        {
+            var document = ParseToDocument(html);
+            return Convert(url, document.FirstElementChild);
+        }
+
         public ConvertedContent Convert(Uri url, INode current)
         {
             mediaConverter = new MediaConverter(url);
@@ -72,6 +83,13 @@ namespace HtmlToGmi
                 Images = Images,
                 Links = BodyLinks.GetLinks()
             };
+        }
+
+        private IHtmlDocument ParseToDocument(string html)
+        {
+            var context = BrowsingContext.New(Configuration.Default);
+            var parser = context.GetService<IHtmlParser>();
+            return parser.ParseDocument(html);
         }
 
         private void FlushLinkBuffer()
