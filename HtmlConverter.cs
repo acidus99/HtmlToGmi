@@ -572,7 +572,7 @@ namespace HtmlToGmi
         }
 
         private bool IsExternalLink(Uri url)
-            => url.Host.EndsWith(BaseUrl.Host);
+            => !url.Host.EndsWith(BaseUrl.Host);
 
         private string GetImageUrl(Uri url)
             => (ImageRewriteCallback != null) ?
