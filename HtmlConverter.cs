@@ -102,8 +102,8 @@ namespace HtmlToGmi
                 foreach (var link in linkBuffer)
                 {
                     var hostText = "";
-                    if(link.Url.Scheme.StartsWith("http"))
-                    {
+                    if(BaseUrl.Host != link.Url.Host && link.Url.Scheme.StartsWith("http"))
+                    { 
                         hostText = $"({link.Url.Host}) ";
                     }
                     buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. {hostText}\"{link.Text}\"");
