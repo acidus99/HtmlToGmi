@@ -10,6 +10,9 @@ namespace HtmlToGmi.Html
 {
     public class MediaConverter
     {
+        //older sites using non-native lazy loading will have source as a data-src attribute
+        static readonly string[] imgSourceAttributes = { "data-src", "data-lazy-src", "src" };
+
         static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
         Uri BaseUrl;
@@ -89,24 +92,27 @@ namespace HtmlToGmi.Html
 
         private Uri GetUrl(IElement img)
         {
-            try
+            foreach(string attrib in imgSourceAttributes)
             {
-                //older sites using non-native lazy loading will have source as a data-src attribute
-                var url = img.GetAttribute("data-src");
-                if (string.IsNullOrEmpty(url))
+                if(img.HasAttribute(attrib))
                 {
-                    url = img.GetAttribute("src");
+                    var url = img.GetAttribute(attrib).Trim();
+                    if(!string.IsNullOrEmpty(url))
+                    {
+                        try
+                        {
+                            var uri = new Uri(BaseUrl, url);
+                            if (uri.Scheme.StartsWith("http"))
+                            {
+                                return uri;
+                            }
+                        } catch(Exception)
+                        {
+                        }
+                    }
                 }
-                if (string.IsNullOrEmpty(url))
-                {
-                    return null;
-                }
-                return new Uri(BaseUrl, url);
             }
-            catch (Exception)
-            {
-                return null;
-            }
+            return null;
         }
     }
 }

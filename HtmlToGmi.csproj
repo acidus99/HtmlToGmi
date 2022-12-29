@@ -12,7 +12,6 @@
     <None Remove=".gitignore" />
     <None Remove="Models\" />
     <None Remove="Filter\" />
-    <None Remove="Special\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="0.17.1" />
@@ -20,6 +19,5 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Filter\" />
-    <Folder Include="Special\" />
   </ItemGroup>
 </Project>
