@@ -1,0 +1,4 @@
+﻿- Fixed: <script type="template"> can cause markup to appear in Link text
+- Fixed: Remove SVG so there internal text like titles don't appear in content links
+- Fixed: Only show host for HTTP/HTTPS links
+- Fixed: Support img tags using data-src and data-lazy-src for lazy loading images 
