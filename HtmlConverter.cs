@@ -305,13 +305,17 @@ namespace HtmlToGmi
                     ProcessList(element);
                     break;
 
-                //skipping
-                case "noscript":
-                case "script":
+                //skipping tags
+                //header stuff
                 case "head":
                 case "meta":
                 case "link":
                 case "style":
+
+                //body content
+                case "figcaption": //we have special logic to handle figures. If we encounter a figcaption outside of a figure we want to ignore it
+                case "noscript":
+                case "script":
                 case "svg":
                     return;
 
