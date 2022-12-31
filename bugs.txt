@@ -1,0 +1,14 @@
+https://apjjf.org/-Mark-Selden/3173/article.html
+
+ 	- Number of article hyperlinks seems wrong
+	
+https://thehill.com
+
+	- returns errors / blocked
+	
+
+https://www.hollywoodreporter.com/news/general-news/jeremy-clarkson-meghan-markle-column-the-sun-apologizes-removes-1235287380/	
+	//Mailto link is weird:
+	Just gross output in general (the bottom)
+	Links for "TV" is a anchor all by itself
+
