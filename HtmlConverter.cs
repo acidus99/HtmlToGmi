@@ -572,6 +572,11 @@ namespace HtmlToGmi
             {
                 return null;
             }
+            //if it points to the current URL, skip it
+            if(url.Equals(BaseUrl))
+            {
+                return null;
+            }
 
             //ignore JS links, since those won't do anything in a Gemini client
             if(url.Scheme == "javascript")
