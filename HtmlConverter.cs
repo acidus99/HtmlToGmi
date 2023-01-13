@@ -94,13 +94,15 @@ namespace HtmlToGmi
             return parser.ParseDocument(html);
         }
 
-        private void FlushLinkBuffer()
+        private bool FlushLinkBuffer()
         {
+            bool ret = false;
             if (linkBuffer.Count > 0 && !buffer.InBlockquote)
             {
                 buffer.EnsureAtLineStart();
                 foreach (var link in linkBuffer)
                 {
+                    ret = true;
                     var hostText = "";
                     if(BaseUrl.Host != link.Url.Host && link.Url.Scheme.StartsWith("http"))
                     { 
@@ -108,8 +110,10 @@ namespace HtmlToGmi
                     }
                     buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. {hostText}\"{link.Text}\"");
                 }
+                buffer.AppendLine();
                 linkBuffer.Clear();
             }
+            return ret;
         }
 
         private void ConvertNode(INode current)
@@ -267,9 +271,12 @@ namespace HtmlToGmi
                     buffer.EnsureAtLineStart();
                     if (buffer.Content.Length > size)
                     {
-                        FlushLinkBuffer();
                         //add another blank line if this paragraph had content
-                        buffer.AppendLine();
+                        //if we had links to flush, there already is an empty line so skip
+                        if (!FlushLinkBuffer())
+                        {
+                            buffer.AppendLine();
+                        }
                     }
                     break;
 
@@ -323,6 +330,8 @@ namespace HtmlToGmi
                     ProcessGenericTag(element);
                     break;
             }
+
+            HandlePendingLinks(element);
         }
 
         public bool ShouldProcessElement(HtmlElement element, string normalizedTagName)
@@ -353,6 +362,15 @@ namespace HtmlToGmi
             }
 
             return true;
+        }
+
+        private void HandlePendingLinks(HtmlElement element)
+        {
+            if(linkBuffer.Count > 0 && ShouldDisplayAsBlock(element))
+            {
+                FlushLinkBuffer();
+                buffer.EnsureAtLineStart();
+            }
         }
 
         private bool ShouldSkipRole(string role)
