@@ -100,20 +100,52 @@ namespace HtmlToGmi
             if (linkBuffer.Count > 0 && !buffer.InBlockquote)
             {
                 buffer.EnsureAtLineStart();
-                foreach (var link in linkBuffer)
+
+                //lets see if the last line is equal to the link text
+                if (CanReplaceLastLine())
                 {
+                    //if so trim the last line
+                    buffer.RemoveLastLine();
                     ret = true;
-                    var hostText = "";
-                    if(BaseUrl.Host != link.Url.Host && link.Url.Scheme.StartsWith("http"))
-                    { 
-                        hostText = $"({link.Url.Host}) ";
-                    }
-                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. {hostText}\"{link.Text}\"");
+                    var link = linkBuffer[0];
+                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.Text}");
+                    linkBuffer.Clear();
+                    //roll back found link counter
+                    linkCounter--;
                 }
-                buffer.AppendLine();
-                linkBuffer.Clear();
+                else
+                {
+                    foreach (var link in linkBuffer)
+                    {
+                        ret = true;
+                        var hostText = "";
+                        if (BaseUrl.Host != link.Url.Host && link.Url.Scheme.StartsWith("http"))
+                        {
+                            hostText = $"({link.Url.Host}) ";
+                        }
+                        buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. {hostText}\"{link.Text}\"");
+                    }
+                    buffer.AppendLine();
+                    linkBuffer.Clear();
+                }
             }
             return ret;
+        }
+
+        private bool CanReplaceLastLine()
+        {
+            if(linkBuffer.Count != 1)
+            {
+                return false;
+            }
+            var lastLine = buffer.GetLastLine();
+            //bulleted lists can be converted, so trim it off
+            if(lastLine.StartsWith("* ") && lastLine.Length >=3)
+            {
+                lastLine = lastLine.Substring(2);
+            }
+
+            return lastLine == $"{linkBuffer[0].Text}[{linkBuffer[0].OrderDetected}]";
         }
 
         private void ConvertNode(INode current)
