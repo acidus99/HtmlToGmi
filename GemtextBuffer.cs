@@ -78,6 +78,36 @@ namespace HtmlToGmi
             }
         }
 
+        /// <summary>
+        /// returns the last line of the buffer
+        /// </summary>
+        /// <returns></returns>
+        public String GetLastLine()
+        {
+            //find the second newline, by trimming the trailing one and getting the second
+            var secondToLastNewLine = Content.TrimEnd().LastIndexOf('\n');
+            if(secondToLastNewLine == -1)
+            {
+                //only 1 line in the buffer, so return the whole line
+                secondToLastNewLine = 0;
+            }
+            return Content.Substring(secondToLastNewLine).Trim();
+        }
+
+        public void RemoveLastLine()
+        {
+            if(!Content.Contains('\n'))
+            {
+                Reset();
+            } else
+            {
+                var content = Content.Substring(0, Content.TrimEnd().LastIndexOf('\n'));
+                Reset();
+                sb.AppendLine(content);
+            }
+        }
+
+
         public void HandleLineStart(string s)
         {
             //if we are adding something that is not whitespace, and we have a prefix
