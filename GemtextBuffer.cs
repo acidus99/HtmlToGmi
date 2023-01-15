@@ -84,26 +84,40 @@ namespace HtmlToGmi
         /// <returns></returns>
         public String GetLastLine()
         {
-            //find the second newline, by trimming the trailing one and getting the second
+            return Content.Substring(GetLastLineStartIndex()).Trim();
+        }
+
+        private int GetLastLineStartIndex()
+        {
             var secondToLastNewLine = Content.TrimEnd().LastIndexOf('\n');
-            if(secondToLastNewLine == -1)
+            if (secondToLastNewLine == -1)
             {
                 //only 1 line in the buffer, so return the whole line
                 secondToLastNewLine = 0;
             }
-            return Content.Substring(secondToLastNewLine).Trim();
+            return secondToLastNewLine;
         }
 
         public void RemoveLastLine()
         {
-            if(!Content.Contains('\n'))
+            if (!Content.Contains('\n'))
             {
                 Reset();
-            } else
+            }
+            else
             {
-                var content = Content.Substring(0, Content.TrimEnd().LastIndexOf('\n'));
-                Reset();
-                sb.AppendLine(content);
+                var index = GetLastLineStartIndex();
+                //we want all content before the last line index
+                if (index > 0)
+                {
+                    var content = Content.Substring(0, index);
+                    Reset();
+                    sb.AppendLine(content);
+                }
+                else
+                {
+                    Reset();
+                }
             }
         }
 
