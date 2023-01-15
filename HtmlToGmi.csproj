@@ -5,13 +5,16 @@
     <ImplicitUsings>false</ImplicitUsings>
   </PropertyGroup>
 
+  
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
-    <None Remove="AngleSharp" />
     <None Remove=".gitattributes" />
     <None Remove=".DS_Store" />
     <None Remove=".gitignore" />
-    <None Remove="Models\" />
-    <None Remove="Filter\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="0.17.1" />
