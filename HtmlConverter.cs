@@ -81,7 +81,7 @@ namespace HtmlToGmi
             return new ConvertedContent
             {
                 Url = url,
-                Gemtext = buffer.Content,
+                Gemtext = buffer.Content.TrimEnd(),
                 Images = Images,
                 Links = BodyLinks.GetLinks()
             };
