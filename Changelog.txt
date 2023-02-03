@@ -4,3 +4,4 @@
 - Fixed: Support img tags using data-src and data-lazy-src for lazy loading images
 - Fixed: Ignore orphaned figcaption tags
 - Fixed: Trailing whitespace in gemtext output from closing block elements
+- Fixed: Use "title" attribute for image links if "alt" attribute is missing/blank
