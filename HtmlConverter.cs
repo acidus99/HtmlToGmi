@@ -270,6 +270,11 @@ namespace HtmlToGmi
                     ParseChildern(element);
                     break;
 
+                case "hr":
+                    buffer.EnsureAtLineStart();
+                    buffer.AppendLine("-=-=-=-=-=-=-=-=-=-=-");
+                    break;
+
                 case "i":
                     if (ShouldUseItalics(element))
                     {
