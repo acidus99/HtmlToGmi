@@ -63,6 +63,12 @@ namespace HtmlToGmi
 
         int linkCounter = 0;
 
+        TextConverter linkTextExractor = new TextConverter
+        {
+            ShouldConvertImages = false,
+            ShouldCollapseNewlines = true
+        };
+
         public ConvertedContent Convert(string url, string html)
             => Convert(new Uri(url), html);
 
@@ -663,7 +669,7 @@ namespace HtmlToGmi
             return new Hyperlink
             {
                 OrderDetected = linkCounter,
-                Text = a.TextContent.Trim(),
+                Text = linkTextExractor.Convert(a).Trim(),
                 Url = url,
                 IsExternal = IsExternalLink(url)
             };

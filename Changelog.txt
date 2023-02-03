@@ -7,3 +7,4 @@
 - Feature: Use "title" attribute for image links if "alt" attribute is missing/blank
 - Fixed: Ignore form elements
 - Feature: Support HR tags
+- Fixed: Properly convert <br>, other tags, in anchor link text
