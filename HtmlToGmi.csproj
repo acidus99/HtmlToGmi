@@ -17,7 +17,7 @@
     <None Remove=".gitignore" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="0.17.1" />
+    <PackageReference Include="AngleSharp" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
