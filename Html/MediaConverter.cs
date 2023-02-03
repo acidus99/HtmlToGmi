@@ -81,6 +81,11 @@ namespace HtmlToGmi.Html
         private string GetAlt(IElement img)
         {
             var caption = img.GetAttribute("alt") ?? "";
+            if (string.IsNullOrEmpty(caption))
+            {
+                caption = img.GetAttribute("title") ?? "";
+            }
+
             caption = TextConverter.CollapseWhitespace(caption);
             return caption.Length > 0 ? caption : "Article Image";
         }
