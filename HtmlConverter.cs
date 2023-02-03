@@ -345,15 +345,29 @@ namespace HtmlToGmi
                     break;
 
                 //skipping tags
+
                 //header stuff
                 case "head":
                 case "meta":
                 case "link":
                 case "style":
 
+                //form stuff
+                case "button":
+                case "datalist":
+                case "fieldset":
+                case "form":
+                case "input":
+                case "label":
+                case "legend":
+                case "optgroup":
+                case "option":
+                case "select":
+                case "textarea":
+
                 //body content
                 case "figcaption": //we have special logic to handle figures. If we encounter a figcaption outside of a figure we want to ignore it
-                case "noscript":
+                case "noscript": //noscript is rarely valuable, as it usually just tells you to enable JS
                 case "script":
                 case "svg":
                     return;
