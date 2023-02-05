@@ -63,33 +63,42 @@ namespace HtmlToGmi
 
         int linkCounter = 0;
 
+        IHtmlDocument Document;
+        IElement DocumentRoot;
+
         TextConverter linkTextExractor = new TextConverter
         {
             ShouldConvertImages = false,
             ShouldCollapseNewlines = true
         };
 
+        HtmlMetaData MetaData;
+
         public ConvertedContent Convert(string url, string html)
             => Convert(new Uri(url), html);
 
         public ConvertedContent Convert(Uri url, string html)
-        {
-            var document = ParseToDocument(html);
-            return Convert(url, document.FirstElementChild);
-        }
+            => Convert(url, ParseToDocument(html));
 
-        public ConvertedContent Convert(Uri url, INode current)
+        public ConvertedContent Convert(Uri url, IHtmlDocument document)
         {
+            Document = document;
+            DocumentRoot = Document.FirstElementChild;
+
             mediaConverter = new MediaConverter(url);
             BaseUrl = url;
-            ConvertNode(current);
+
+            MetaData = PopulateMetaData();
+
+            ConvertNode(DocumentRoot);
             FlushLinkBuffer();
             return new ConvertedContent
             {
                 Url = url,
                 Gemtext = buffer.Content.TrimEnd(),
                 Images = Images,
-                Links = BodyLinks.GetLinks()
+                Links = BodyLinks.GetLinks(),
+                MetaData = MetaData
             };
         }
 
@@ -220,6 +229,8 @@ namespace HtmlToGmi
             {
                 return;
             }
+
+            HandlePendingLinks(element);
 
             switch (nodeName)
             {
@@ -690,5 +701,12 @@ namespace HtmlToGmi
 
         private static bool IsInline(HtmlElement element)
             => element.GetAttribute("style")?.Contains("display:inline") ?? false;
+
+        private HtmlMetaData PopulateMetaData()
+        {
+            var metaParser = new MetaDataParser(BaseUrl, DocumentRoot);
+            return metaParser.GetMetaData();
+        }
+
     }
 }
