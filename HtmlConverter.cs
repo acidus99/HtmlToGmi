@@ -314,6 +314,10 @@ namespace HtmlToGmi
                     ProcessLi(element);
                     break;
 
+                case "nav":
+                    ProcessNav(element);
+                    break;
+
                 case "ol":
                     ProcessList(element);
                     break;
@@ -548,6 +552,17 @@ namespace HtmlToGmi
                 buffer.EnsureAtLineStart();
                 buffer.SetLineStart("* * ");
                 ConvertChildren(li);
+                buffer.EnsureAtLineStart();
+            }
+        }
+
+        private void ProcessNav(HtmlElement nav)
+        {
+            foreach(var anchor in nav.QuerySelectorAll("a"))
+            {
+                buffer.EnsureAtLineStart();
+                ProcessAnchor(anchor as HtmlElement);
+                FlushLinkBuffer();
                 buffer.EnsureAtLineStart();
             }
         }
