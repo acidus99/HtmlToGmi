@@ -417,6 +417,12 @@ namespace HtmlToGmi
                 return false;
             }
 
+            //ARIA telling us its hidden to screen readers
+            if ((element.GetAttribute("aria-hidden") ?? "") == "true")
+            {
+                return false;
+            }
+
             //check the ARIA role
             if (ShouldSkipRole(element.GetAttribute("role")?.ToLower()))
             {

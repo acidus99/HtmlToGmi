@@ -10,3 +10,4 @@
 - Fixed: Properly convert <br>, other tags, in anchor link text
 - Feature: Expose HTML <title>, <meta>, and OpenGraph meta data
 - Feature: Expose RSS/Atom feeds
+- Feature: Ignore aria-hidden tags
