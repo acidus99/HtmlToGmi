@@ -18,11 +18,10 @@ namespace HtmlToGmi.Html
 
 		OpenGraphData OpenGraph;
 
-		public MetaDataParser(Uri url, IElement documentRoot)
+		public MetaDataParser(Uri url, IElement head)
 		{
 			PageUrl = url;
-			Head = documentRoot.QuerySelector("head");
-            
+			Head = head;
         }
 
 		public HtmlMetaData GetMetaData()

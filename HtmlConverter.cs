@@ -83,14 +83,15 @@ namespace HtmlToGmi
         public ConvertedContent Convert(Uri url, IHtmlDocument document)
         {
             Document = document;
+            // AngleSharp creates well-formed HTML documents, with an html, head
+            // and body tags. 
             DocumentRoot = Document.FirstElementChild;
 
             mediaConverter = new MediaConverter(url);
             BaseUrl = url;
 
             MetaData = PopulateMetaData();
-
-            ConvertNode(DocumentRoot);
+            ConvertChildren(DocumentRoot.QuerySelector("body"));
             FlushLinkBuffer();
             return new ConvertedContent
             {
@@ -163,6 +164,14 @@ namespace HtmlToGmi
             return lastLine == $"{linkBuffer[0].Text}[{linkBuffer[0].OrderDetected}]";
         }
 
+        private void ConvertChildren(INode node)
+        {
+            foreach (var child in node.ChildNodes)
+            {
+                ConvertNode(child);
+            }
+        }
+
         private void ConvertNode(INode current)
         {
             switch (current.NodeType)
@@ -174,14 +183,6 @@ namespace HtmlToGmi
                 case NodeType.Element:
                     ProcessHtmlElement(current as HtmlElement);
                     break;
-            }
-        }
-
-        private void ParseChildern(INode node)
-        {
-            foreach (var child in node.ChildNodes)
-            {
-                ConvertNode(child);
             }
         }
 
@@ -241,7 +242,7 @@ namespace HtmlToGmi
                 case "blockquote":
                     buffer.EnsureAtLineStart();
                     buffer.InBlockquote = true;
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     buffer.InBlockquote = false;
                     break;
 
@@ -252,13 +253,13 @@ namespace HtmlToGmi
                 case "dd":
                     buffer.EnsureAtLineStart();
                     buffer.SetLineStart("* ");
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     buffer.EnsureAtLineStart();
                     break;
 
                 case "dt":
                     buffer.EnsureAtLineStart();
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     if (!buffer.AtLineStart)
                     {
                         buffer.AppendLine(":");
@@ -272,19 +273,19 @@ namespace HtmlToGmi
                 case "h1":
                     buffer.EnsureAtLineStart();
                     buffer.SetLineStart("# ");
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     break;
 
                 case "h2":
                     buffer.EnsureAtLineStart();
                     buffer.SetLineStart("## ");
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     break;
 
                 case "h3":
                     buffer.EnsureAtLineStart();
                     buffer.SetLineStart("### ");
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     break;
 
                 case "hr":
@@ -296,12 +297,12 @@ namespace HtmlToGmi
                     if (ShouldUseItalics(element))
                     {
                         buffer.Append("\"");
-                        ParseChildern(element);
+                        ConvertChildren(element);
                         buffer.Append("\"");
                     }
                     else
                     {
-                        ParseChildern(element);
+                        ConvertChildren(element);
                     }
                     break;
 
@@ -320,7 +321,7 @@ namespace HtmlToGmi
                 case "p":
                     buffer.EnsureAtLineStart();
                     int size = buffer.Content.Length;
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     //make sure the paragraph ends with a new line
                     buffer.EnsureAtLineStart();
                     if (buffer.Content.Length > size)
@@ -338,7 +339,7 @@ namespace HtmlToGmi
                     buffer.EnsureAtLineStart();
                     buffer.AppendLine("```");
                     inPreformatted = true;
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     buffer.EnsureAtLineStart();
                     inPreformatted = false;
                     buffer.AppendLine("```");
@@ -358,7 +359,7 @@ namespace HtmlToGmi
 
                 case "u":
                     buffer.Append("_");
-                    ParseChildern(element);
+                    ConvertChildren(element);
                     buffer.Append("_");
                     break;
 
@@ -482,7 +483,7 @@ namespace HtmlToGmi
 
         private void ProcessAnchor(HtmlElement anchor)
         {
-            ParseChildern(anchor);
+            ConvertChildren(anchor);
             //
             //we only care about meaningful links
             //so we can check to see if this anchor had any non-whitespace text
@@ -508,12 +509,12 @@ namespace HtmlToGmi
             if (ShouldDisplayAsBlock(element))
             {
                 buffer.EnsureAtLineStart();
-                ParseChildern(element);
+                ConvertChildren(element);
                 buffer.EnsureAtLineStart();
             }
             else
             {
-                ParseChildern(element);
+                ConvertChildren(element);
             }
         }
 
@@ -539,14 +540,14 @@ namespace HtmlToGmi
             {
                 buffer.EnsureAtLineStart();
                 buffer.SetLineStart("* ");
-                ParseChildern(li);
+                ConvertChildren(li);
                 buffer.EnsureAtLineStart();
             }
             else
             {
                 buffer.EnsureAtLineStart();
                 buffer.SetLineStart("* * ");
-                ParseChildern(li);
+                ConvertChildren(li);
                 buffer.EnsureAtLineStart();
             }
         }
@@ -556,7 +557,7 @@ namespace HtmlToGmi
             //block element
             buffer.EnsureAtLineStart();
             listDepth++;
-            ParseChildern(element);
+            ConvertChildren(element);
             listDepth--;
             buffer.EnsureAtLineStart();
         }
@@ -710,7 +711,7 @@ namespace HtmlToGmi
 
         private HtmlMetaData PopulateMetaData()
         {
-            var metaParser = new MetaDataParser(BaseUrl, DocumentRoot);
+            var metaParser = new MetaDataParser(BaseUrl, DocumentRoot.QuerySelector("head"));
             return metaParser.GetMetaData();
         }
 
