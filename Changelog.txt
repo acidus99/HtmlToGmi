@@ -12,3 +12,4 @@
 - Feature: Expose RSS/Atom feeds
 - Feature: Ignore aria-hidden tags
 - Fixed: Ignore missing <title> tag
+- Fixed: Extra newlines added when appending multi-line text

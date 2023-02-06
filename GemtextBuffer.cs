@@ -46,16 +46,34 @@ namespace HtmlToGmi
         {
             if(s.Contains('\n'))
             {
-                foreach(string sub in s.Split('\n'))
-                {
-                    AppendLine(sub);
-                }
+                AppendMultiline(s);
                 return;
             }
 
             HandleLineStart(s);
             HandleBlockQuote(s);
             sb.Append(s);
+        }
+
+
+        private void AppendMultiline(string s)
+        {
+            // trying to append multiple lines. Need to break these on the \n
+            //and ensure that any prefixes needed  line start is handled properly
+            //we need to AppendLine() the first N-1 parts, and just Append() the
+            //last to avoid adding an extra new line
+            var lines = s.Split('\n');
+            for(int i=0; i < lines.Length; i++)
+            {
+                if (i < lines.Length - 1)
+                {
+                    AppendLine(lines[i]);
+                }
+                else
+                {
+                    Append(lines[i]);
+                }
+            }
         }
 
         public void AppendLine(string s = "")
