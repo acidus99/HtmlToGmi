@@ -49,7 +49,7 @@ namespace HtmlToGmi.Html
 			=> s?.Replace("\n"," ").Trim() ?? "";
 
 		private string GetMetaTitle()
-			=> Normalize(Head.QuerySelector("title").TextContent);
+			=> Normalize(Head.QuerySelector("title")?.TextContent);
 
 		//create fully qualified URLs from a string
         private Uri CreateUrl(string url)

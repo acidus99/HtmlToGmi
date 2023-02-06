@@ -11,3 +11,4 @@
 - Feature: Expose HTML <title>, <meta>, and OpenGraph meta data
 - Feature: Expose RSS/Atom feeds
 - Feature: Ignore aria-hidden tags
+- Fixed: Ignore missing <title> tag
