@@ -1,9 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 using AngleSharp.Html.Dom;
 using AngleSharp.Dom;
 
+using HtmlToGmi.Html;
 using HtmlToGmi.Models;
 
 namespace HtmlToGmi
@@ -18,10 +21,25 @@ namespace HtmlToGmi
 
         private static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
-        private GemtextBuffer buffer = new GemtextBuffer();
+        private GemtextBuffer buffer;
+
+        public List<Image> Images;
+
+        MediaConverter mediaConverter;
+
+        private Uri BaseUri;
+
+        public TextConverter(Uri baseUri = null)
+        {
+            BaseUri = baseUri;
+            buffer = new GemtextBuffer();
+            Images = new List<Image>();
+            mediaConverter = new MediaConverter(BaseUri);
+        }
 
         public string Convert(INode current)
         {
+            Images.Clear();
             buffer.Reset();
             ExtractInnerTextHelper(current);
             return ShouldCollapseNewlines?
@@ -62,9 +80,6 @@ namespace HtmlToGmi
 
                         switch (nodeName)
                         {
-                            case "a":
-                                ExtractChildrenText(current);
-                                break;
 
                             case "br":
                                 buffer.AppendLine();
@@ -75,6 +90,7 @@ namespace HtmlToGmi
                                 {
                                     buffer.Append(ConvertImage(element));
                                 }
+                                AddImage(element);
                                 break;
 
                             case "figure":
@@ -112,9 +128,17 @@ namespace HtmlToGmi
             {
                 alt = element.GetAttribute("title");
             }
-            return !string.IsNullOrEmpty(alt) ?
-                $"[Image: {alt}] " :
-                "";
+            return !string.IsNullOrEmpty(alt) ? alt : "";
+        }
+
+        private void AddImage(HtmlElement img)
+        {
+            var image = mediaConverter.ConvertImg(img);
+            if(image !=null)
+            {
+                Images.Add(image);
+            }
+               
         }
 
         /// <summary>
