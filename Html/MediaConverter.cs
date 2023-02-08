@@ -17,7 +17,7 @@ namespace HtmlToGmi.Html
 
         Uri BaseUrl;
 
-        public MediaConverter(Uri basePageUrl)
+        public MediaConverter(Uri basePageUrl = null)
         {
             BaseUrl = basePageUrl;
         }
@@ -106,12 +106,23 @@ namespace HtmlToGmi.Html
                     {
                         try
                         {
-                            var uri = new Uri(BaseUrl, url);
-                            if (uri.Scheme.StartsWith("http"))
+                            //are we already absolute?
+                            Uri uri = null;
+                            if (BaseUrl != null)
+                            {
+                                uri = new Uri(BaseUrl, url);
+                            }
+                            else if (url.Contains("://"))
+                            {
+                                //already absolute, so we are good
+                                uri = new Uri(url);
+                            }
+                            if (uri.IsAbsoluteUri && uri.Scheme.StartsWith("http"))
                             {
                                 return uri;
                             }
-                        } catch(Exception)
+                        }
+                        catch (Exception)
                         {
                         }
                     }
