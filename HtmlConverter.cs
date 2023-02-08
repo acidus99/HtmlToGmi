@@ -66,11 +66,7 @@ namespace HtmlToGmi
         IHtmlDocument Document;
         IElement DocumentRoot;
 
-        TextConverter linkTextExractor = new TextConverter
-        {
-            ShouldConvertImages = false,
-            ShouldCollapseNewlines = true
-        };
+        TextConverter linkTextExractor;
 
         HtmlMetaData MetaData;
 
@@ -87,8 +83,13 @@ namespace HtmlToGmi
             // and body tags. 
             DocumentRoot = Document.FirstElementChild;
 
-            mediaConverter = new MediaConverter(url);
             BaseUrl = url;
+            mediaConverter = new MediaConverter(url);
+            linkTextExractor = new TextConverter(url)
+            {
+                ShouldCollapseNewlines = true,
+                ShouldConvertImages = true
+            };
 
             MetaData = PopulateMetaData();
             ConvertChildren(DocumentRoot.QuerySelector("body"));
@@ -187,17 +188,20 @@ namespace HtmlToGmi
         }
 
         private void ProcessTextNode(INode textNode)
+            => AppendText(textNode.TextContent);
+
+        private void AppendText(string text)
         {
             if (inPreformatted)
             {
-                buffer.Append(textNode.TextContent);
+                buffer.Append(text);
             }
             else
             {
                 //if its not only whitespace add it.
-                if (textNode.TextContent.Trim().Length > 0)
+                if (text.Trim().Length > 0)
                 {
-                    var text = TextConverter.CollapseWhitespace(textNode.TextContent);
+                    text = TextConverter.CollapseWhitespace(text);
                     if (buffer.AtLineStart)
                     {
                         buffer.Append(text.TrimStart());
@@ -208,15 +212,15 @@ namespace HtmlToGmi
                     }
                 }
                 //if its whitepsace, but doesn't have a newline
-                else if (!textNode.TextContent.Contains('\n'))
+                else if (!text.Contains('\n'))
                 {
                     if (buffer.AtLineStart)
                     {
-                        buffer.Append(textNode.TextContent.TrimStart());
+                        buffer.Append(text.TrimStart());
                     }
                     else
                     {
-                        buffer.Append(textNode.TextContent);
+                        buffer.Append(text);
                     }
                 }
             }
@@ -252,7 +256,7 @@ namespace HtmlToGmi
 
                 case "dd":
                     buffer.EnsureAtLineStart();
-                    buffer.SetLineStart("* ");
+                    buffer.SetLinePrefix("* ");
                     ConvertChildren(element);
                     buffer.EnsureAtLineStart();
                     break;
@@ -272,19 +276,19 @@ namespace HtmlToGmi
 
                 case "h1":
                     buffer.EnsureAtLineStart();
-                    buffer.SetLineStart("# ");
+                    buffer.SetLinePrefix("# ");
                     ConvertChildren(element);
                     break;
 
                 case "h2":
                     buffer.EnsureAtLineStart();
-                    buffer.SetLineStart("## ");
+                    buffer.SetLinePrefix("## ");
                     ConvertChildren(element);
                     break;
 
                 case "h3":
                     buffer.EnsureAtLineStart();
-                    buffer.SetLineStart("### ");
+                    buffer.SetLinePrefix("### ");
                     ConvertChildren(element);
                     break;
 
@@ -487,25 +491,57 @@ namespace HtmlToGmi
 
         private void ProcessAnchor(HtmlElement anchor)
         {
-            ConvertChildren(anchor);
-            //
-            //we only care about meaningful links
-            //so we can check to see if this anchor had any non-whitespace text
-            //(note, A tags with only an IMG inside is common, but we handle that
-            //by have a link to media already. No reason to also have a hyperlink
-            if (anchor.TextContent.Trim().Length > 0)
+            //is it a real hyperlink we want to use?
+            Uri url = CreateUrl(anchor);
+
+            if (url == null)
             {
-                var link = CreateLink(anchor);
-                if (link != null)
+                //nope, just process the child, we aren't going to do anything special
+                ConvertChildren(anchor);
+                return;
+            }
+
+            //do we have aria text? That takes precedence for link text
+            string linkText = GetAriaLabel(anchor);
+            List<Image> images = null;
+            if(string.IsNullOrEmpty(linkText))
+            {
+                linkText = linkTextExractor.Convert(anchor);
+                images = linkTextExractor.Images;
+            }
+
+            linkCounter++;
+            var link = new Hyperlink
+            {
+                OrderDetected = linkCounter,
+                Text = linkText,
+                Url = url,
+                IsExternal = IsExternalLink(url)
+            };
+
+            if (ShouldRenderHyperlinks)
+            {
+                if (buffer.AtLineStart && !buffer.HasLinePrefix)
                 {
-                    if (ShouldRenderHyperlinks)
-                    {
-                        buffer.Append($"[{link.OrderDetected}]");
-                        linkBuffer.Add(link);
-                    }
-                    BodyLinks.AddLink(link);
+                    //if we are at the start of a line, just make this a link line
+                    //and no reason to use a footnote-style anchor
+                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.Text}");
+                    //rollback linkcounter
+                    linkCounter--;
+                }
+                else
+                {
+                    //use a footnote and append to the link buffer
+                    buffer.Append($"{linkText}[{link.OrderDetected}]");
+                    linkBuffer.Add(link);
                 }
             }
+            if(images != null)
+            {
+                images.ForEach(x => HandleImage(x));
+            }
+
+            BodyLinks.AddLink(link);
         }
 
         private void ProcessGenericTag(HtmlElement element)
@@ -543,14 +579,14 @@ namespace HtmlToGmi
             if (listDepth == 1)
             {
                 buffer.EnsureAtLineStart();
-                buffer.SetLineStart("* ");
+                buffer.SetLinePrefix("* ");
                 ConvertChildren(li);
                 buffer.EnsureAtLineStart();
             }
             else
             {
                 buffer.EnsureAtLineStart();
-                buffer.SetLineStart("* * ");
+                buffer.SetLinePrefix("* * ");
                 ConvertChildren(li);
                 buffer.EnsureAtLineStart();
             }
@@ -634,6 +670,11 @@ namespace HtmlToGmi
             //TODO: sanity check table
             TableParser parser = new TableParser();
             var table = parser.ParseTable(element);
+            if (table.Caption == "")
+            {
+                //attempt to use an aria label to annotate the table
+                table.Caption = GetAriaLabel(element);
+            }
             if (table != null && !buffer.InBlockquote)
             {
                 buffer.EnsureAtLineStart();
@@ -656,7 +697,7 @@ namespace HtmlToGmi
             return !IsInline(element);
         }
 
-        private Hyperlink CreateLink(HtmlElement a)
+        private Uri CreateUrl(HtmlElement a)
         {
             Uri url = null;
             var href = a.GetAttribute("href") ?? "";
@@ -696,16 +737,7 @@ namespace HtmlToGmi
             {
                 return null;
             }
-
-            linkCounter++;
-
-            return new Hyperlink
-            {
-                OrderDetected = linkCounter,
-                Text = linkTextExractor.Convert(a).Trim(),
-                Url = url,
-                IsExternal = IsExternalLink(url)
-            };
+            return url;
         }
 
         private bool IsExternalLink(Uri url)
@@ -720,6 +752,9 @@ namespace HtmlToGmi
             => (AnchorRewriteCallback != null) ?
                 AnchorRewriteCallback(url) :
                 url.AbsoluteUri;
+
+        private string GetAriaLabel(HtmlElement element)
+            => element.GetAttribute("aria-label") ?? "";
 
         private static bool IsInline(HtmlElement element)
             => element.GetAttribute("style")?.Contains("display:inline") ?? false;
