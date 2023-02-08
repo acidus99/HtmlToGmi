@@ -17,14 +17,20 @@ namespace HtmlToGmi
 
         public bool HasContent => (sb.Length > 0);
 
+        /// <summary>
+        /// are we are the very beginning of a line? There could still be a line prefix
+        /// </summary>
         public bool AtLineStart
             => !HasContent || Content.EndsWith('\n');
+
+        public bool HasLinePrefix
+            => (linePrefex != null);
 
         public bool InBlockquote { get; set; } = false;
 
         private StringBuilder sb;
 
-        private string lineStart = null;
+        private string linePrefex = null;
 
         public GemtextBuffer()
         {
@@ -34,12 +40,12 @@ namespace HtmlToGmi
         public void Reset()
         {
             sb.Clear();
-            lineStart = null;
+            linePrefex = null;
         }
 
-        public void SetLineStart(string s)
+        public void SetLinePrefix(string s)
         {
-            lineStart = s;
+            linePrefex = s;
         }
 
         public void Append(string s)
@@ -50,7 +56,7 @@ namespace HtmlToGmi
                 return;
             }
 
-            HandleLineStart(s);
+            HandleLinePrefix();
             HandleBlockQuote(s);
             sb.Append(s);
         }
@@ -78,16 +84,16 @@ namespace HtmlToGmi
 
         public void AppendLine(string s = "")
         {
-            HandleLineStart(s);
+            HandleLinePrefix();
             HandleBlockQuote(s);
             sb.AppendLine(s);
         }
 
         public void EnsureAtLineStart()
         {
-            if(AtLineStart && lineStart != null)
+            if(AtLineStart && linePrefex != null)
             {
-                lineStart = null;
+                linePrefex = null;
             }
 
             if (!AtLineStart)
@@ -139,14 +145,13 @@ namespace HtmlToGmi
             }
         }
 
-
-        public void HandleLineStart(string s)
+        private void HandleLinePrefix()
         {
             //if we are adding something that is not whitespace, and we have a prefix
-            if(lineStart != null)
+            if(linePrefex != null)
             {
-                sb.Append(lineStart);
-                lineStart = null;
+                sb.Append(linePrefex);
+                linePrefex = null;
             }
         }
 
