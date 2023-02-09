@@ -483,6 +483,12 @@ namespace HtmlToGmi
             {
                 return false;
             }
+            //if there is no content, don't enclose it
+            if (element.TextContent.Trim().Length == 0)
+            {
+                return false;
+            }
+
             return true;
         }
 
