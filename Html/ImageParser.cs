@@ -8,19 +8,16 @@ using HtmlToGmi.Models;
 
 namespace HtmlToGmi.Html
 {
-	public class ImageParser
+	public class ImageParser : AbstractParser
 	{
         //older sites using non-native lazy loading will have source as a data-src attribute
         static readonly string[] imgSourceAttributes = { "data-src", "data-lazy-src", "src" };
-        Uri BaseUrl;
 
         public string DefaultCaption { get; set; } = "Article Image";
 
-
-        public ImageParser(Uri basePageUrl = null)
-        {
-            BaseUrl = basePageUrl;
-        }
+        public ImageParser(Uri baseUrl = null)
+            :base(baseUrl)
+        { }
 
         /// <summary>
         /// Attempts to parse an IMG tag into an ImageLink
@@ -129,48 +126,6 @@ namespace HtmlToGmi.Html
                     }
                 }
             }
-            return null;
-        }
-
-        /// <summary>
-        /// Normalize a string for use as a caption or description
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        private string NormalizeText(string s)
-            => TextConverter.CollapseWhitespace(s);
-
-        /// <summary>
-        /// Creates a fully qualified, HTTP(S) URL from a string.
-        /// The base URL for the page is used to resolve any relative urls
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        private Uri CreateUrl(string url)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(url))
-                {
-                    //if we have a BaseUrl, use it
-                    Uri uri = null;
-                    if (BaseUrl != null)
-                    {
-                        uri = new Uri(BaseUrl, url);
-                    }
-                    else if (url.Contains("://"))
-                    {
-                        //already absolute, so we are good
-                        uri = new Uri(url);
-                    }
-                    if (uri.IsAbsoluteUri && uri.Scheme.StartsWith("http"))
-                    {
-                        return uri;
-                    }
-                }
-            }
-            catch (Exception)
-            { }
             return null;
         }
 
