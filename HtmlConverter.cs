@@ -38,7 +38,7 @@ namespace HtmlToGmi
         /// <summary>
         /// All images found in the converted text
         /// </summary>
-        List<Image> Images = new List<Image>();
+        List<ImageLink> Images = new List<ImageLink>();
 
         /// <summary>
         /// tmp buffer used to hold links in the current block of text
@@ -56,7 +56,7 @@ namespace HtmlToGmi
         int listDepth = 0;
 
         GemtextBuffer buffer = new GemtextBuffer();
-        MediaConverter mediaConverter;
+        ImageParser imageParser;
         Uri BaseUrl;
 
         bool inPreformatted = false;
@@ -84,7 +84,7 @@ namespace HtmlToGmi
             DocumentRoot = Document.FirstElementChild;
 
             BaseUrl = url;
-            mediaConverter = new MediaConverter(url);
+            imageParser = new ImageParser(url);
             linkTextExractor = new TextConverter(url)
             {
                 ShouldCollapseNewlines = true,
@@ -509,7 +509,7 @@ namespace HtmlToGmi
 
             //do we have aria text? That takes precedence for link text
             string linkText = GetAriaLabel(anchor);
-            List<Image> images = null;
+            List<ImageLink> images = null;
             if (string.IsNullOrEmpty(linkText))
             {
                 linkText = linkTextExractor.Convert(anchor);
@@ -571,12 +571,13 @@ namespace HtmlToGmi
         }
 
         private void ProcessFigure(HtmlElement figure)
-            => HandleImage(mediaConverter.ConvertFigure(figure));
+            => HandleImage(imageParser.ParseFigure(figure));
+
 
         private void ProcessImg(HtmlElement img)
-            => HandleImage(mediaConverter.ConvertImg(img));
+            => HandleImage(imageParser.ParseImg(img));
 
-        private void HandleImage(Image image)
+        private void HandleImage(ImageLink image)
         {
             if (image != null && ShouldUseImage(image))
             {
@@ -695,7 +696,7 @@ namespace HtmlToGmi
             }
         }
 
-        public bool ShouldUseImage(Image image)
+        public bool ShouldUseImage(ImageLink image)
             => (Images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
 
         public static bool ShouldDisplayAsBlock(HtmlElement element)

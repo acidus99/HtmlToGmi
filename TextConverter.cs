@@ -23,9 +23,9 @@ namespace HtmlToGmi
 
         private GemtextBuffer buffer;
 
-        public List<Image> Images;
+        public List<ImageLink> Images;
 
-        MediaConverter mediaConverter;
+        ImageParser imageParser;
 
         private Uri BaseUri;
 
@@ -33,8 +33,8 @@ namespace HtmlToGmi
         {
             BaseUri = baseUri;
             buffer = new GemtextBuffer();
-            Images = new List<Image>();
-            mediaConverter = new MediaConverter(BaseUri);
+            Images = new List<ImageLink>();
+            imageParser = new ImageParser(BaseUri);
         }
 
         public string Convert(INode current)
@@ -133,7 +133,7 @@ namespace HtmlToGmi
 
         private void AddImage(HtmlElement img)
         {
-            var image = mediaConverter.ConvertImg(img);
+            var image = imageParser.ParseImg(img);
             if(image !=null)
             {
                 Images.Add(image);
