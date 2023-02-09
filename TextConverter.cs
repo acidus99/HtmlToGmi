@@ -86,11 +86,7 @@ namespace HtmlToGmi
                                 break;
 
                             case "img":
-                                if (ShouldConvertImages)
-                                {
-                                    buffer.Append(ConvertImage(element));
-                                }
-                                AddImage(element);
+                                ProcessImg(element);
                                 break;
 
                             case "figure":
@@ -121,24 +117,18 @@ namespace HtmlToGmi
         private void ExtractChildrenText(INode element)
             => element.ChildNodes.ToList().ForEach(x => ExtractInnerTextHelper(x));
 
-        private string ConvertImage(HtmlElement element)
-        {
-            var alt = element.GetAttribute("alt");
-            if(string.IsNullOrEmpty(alt))
-            {
-                alt = element.GetAttribute("title");
-            }
-            return !string.IsNullOrEmpty(alt) ? alt : "";
-        }
-
-        private void AddImage(HtmlElement img)
+        private void ProcessImg(HtmlElement img)
         {
             var image = imageParser.ParseImg(img);
-            if(image !=null)
+            if (image != null)
             {
                 Images.Add(image);
             }
-               
+
+            if (ShouldConvertImages)
+            {
+                buffer.Append(image.Caption);
+            }
         }
 
         /// <summary>
