@@ -50,8 +50,11 @@ namespace HtmlToGmi
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        protected string NormalizeText(string s)
-            => TextConverter.CollapseWhitespace(s);
+        protected string Normalize(string s)
+        {
+            s = s?.Trim() ?? "";
+            return TextConverter.CollapseWhitespace(s);
+        }
 
     }
 }

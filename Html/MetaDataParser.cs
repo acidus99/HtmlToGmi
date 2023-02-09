@@ -10,17 +10,15 @@ namespace HtmlToGmi.Html
 	/// <summary>
     /// Extracts meta data from the HTML
     /// </summary>
-	public class MetaDataParser
+	public class MetaDataParser : AbstractParser
 	{
-
 		IElement Head;
-		Uri PageUrl;
 
 		OpenGraphData OpenGraph;
 
-		public MetaDataParser(Uri url, IElement head)
+		public MetaDataParser(Uri htmlUrl, IElement head)
+			: base(htmlUrl)
 		{
-			PageUrl = url;
 			Head = head;
         }
 
@@ -44,31 +42,8 @@ namespace HtmlToGmi.Html
 			return new HtmlMetaData();
 		}
 
-		private string Normalize(string s)
-			=> s?.Replace("\n"," ").Trim() ?? "";
-
 		private string GetMetaTitle()
 			=> Normalize(Head.QuerySelector("title")?.TextContent);
-
-		//create fully qualified URLs from a string
-        private Uri CreateUrl(string url)
-        {
-            try
-            {
-				if (!string.IsNullOrEmpty(url))
-				{
-					Uri ret = new Uri(PageUrl, url);
-					if (ret.IsAbsoluteUri)
-					{
-						return ret;
-					}
-				}
-            }
-            catch (Exception)
-            {
-            }
-            return null;
-        }
 
 		private Uri FindFeedUrl()
         {
