@@ -510,7 +510,7 @@ namespace HtmlToGmi
             //do we have aria text? That takes precedence for link text
             string linkText = GetAriaLabel(anchor);
             List<Image> images = null;
-            if(string.IsNullOrEmpty(linkText))
+            if (string.IsNullOrEmpty(linkText))
             {
                 linkText = linkTextExractor.Convert(anchor);
                 images = linkTextExractor.Images;
@@ -525,7 +525,12 @@ namespace HtmlToGmi
                 IsExternal = IsExternalLink(url)
             };
 
-            if (ShouldRenderHyperlinks)
+            if (!ShouldRenderHyperlinks)
+            {
+                //not doing anything wild, so just append the text
+                buffer.Append(linkText);
+            }
+            else
             {
                 if (buffer.AtLineStart && !buffer.HasLinePrefix)
                 {
@@ -542,6 +547,7 @@ namespace HtmlToGmi
                     linkBuffer.Add(link);
                 }
             }
+        
             if(images != null)
             {
                 images.ForEach(x => HandleImage(x));
