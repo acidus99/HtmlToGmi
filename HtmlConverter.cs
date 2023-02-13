@@ -484,11 +484,16 @@ namespace HtmlToGmi
             {
                 return false;
             }
-            if (role is "button" or
+            if (role is
+                "alert" or
+                "alertdialog" or
+                "button" or
                 "checkbox" or
+                "dialog" or
                 "form" or
-                "searchbox" or
+                "log" or
                 "search" or
+                "searchbox" or
                 "slider" or
                 "switch")
             {
