@@ -449,7 +449,7 @@ namespace HtmlToGmi
             }
 
             //ARIA telling us its hidden to screen readers
-            if ((element.GetAttribute("aria-hidden") ?? "") == "true")
+            if(element.HasAttribute("hidden") || (element.GetAttribute("aria-hidden") ?? "") == "true")
             {
                 return false;
             }
