@@ -333,7 +333,7 @@ namespace HtmlToGmi
                     break;
 
                 case "img":
-                    ProcessImg(element);
+                    ProcessImg(element as IHtmlImageElement);
                     break;
 
                 case "li":
@@ -617,7 +617,7 @@ namespace HtmlToGmi
             => HandleImage(imageParser.ParseFigure(figure));
 
 
-        private void ProcessImg(HtmlElement img)
+        private void ProcessImg(IHtmlImageElement img)
             => HandleImage(imageParser.ParseImg(img));
 
         private void HandleImage(ImageLink image)

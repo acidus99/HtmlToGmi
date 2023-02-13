@@ -14,7 +14,7 @@ namespace HtmlToGmi
     /// <summary>
     /// Extracts text
     /// </summary>
-    public class TextConverter
+    public class TextConverter : AbstractParser
     {
         public bool ShouldCollapseNewlines { get; set; } = false;
         public bool ShouldConvertImages { get; set; } = false;
@@ -27,14 +27,12 @@ namespace HtmlToGmi
 
         ImageParser imageParser;
 
-        private Uri BaseUri;
-
         public TextConverter(Uri baseUri = null)
+            : base(baseUri)
         {
-            BaseUri = baseUri;
             buffer = new GemtextBuffer();
             Images = new List<ImageLink>();
-            imageParser = new ImageParser(BaseUri);
+            imageParser = new ImageParser(BaseUrl);
         }
 
         public string Convert(INode current)
@@ -86,7 +84,7 @@ namespace HtmlToGmi
                                 break;
 
                             case "img":
-                                ProcessImg(element);
+                                ProcessImg(element as IHtmlImageElement);
                                 break;
 
                             case "figure":
@@ -117,17 +115,16 @@ namespace HtmlToGmi
         private void ExtractChildrenText(INode element)
             => element.ChildNodes.ToList().ForEach(x => ExtractInnerTextHelper(x));
 
-        private void ProcessImg(HtmlElement img)
+        private void ProcessImg(IHtmlImageElement img)
         {
             var image = imageParser.ParseImg(img);
             if (image != null)
             {
                 Images.Add(image);
-            }
-
-            if (ShouldConvertImages)
-            {
-                buffer.Append(image.Caption);
+                if (ShouldConvertImages)
+                {
+                    buffer.Append(image.Caption);
+                }
             }
         }
 

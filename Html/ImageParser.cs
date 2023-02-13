@@ -26,7 +26,7 @@ namespace HtmlToGmi.Html
         /// </summary>
         /// <param name="img"></param>
         /// <returns></returns>
-        public ImageLink ParseImg(HtmlElement img)
+        public ImageLink ParseImg(IHtmlImageElement img)
         {
             var url = GetImageUrl(img);
             //if we can't get a valid URL, just stop
@@ -50,13 +50,13 @@ namespace HtmlToGmi.Html
         /// <returns></returns>
         public ImageLink ParseFigure(HtmlElement figure)
         {
-            var img = figure.QuerySelector("img");
+            IHtmlImageElement img = figure.QuerySelector("img") as IHtmlImageElement;
             //can't find an image? Nothing we can do
             if (img == null)
             {
                 return null;
             }
-
+            
             var url = GetImageUrl(img);
             //no link? nothing I can do
             if (url == null)
@@ -113,17 +113,40 @@ namespace HtmlToGmi.Html
         /// Gets the fully qualified URL that points to the source of the image
         /// Checks different attributes used to store img URLs and attempts to resolve an absolute URL.
         /// </summary>
-        private Uri GetImageUrl(IElement img)
+        private Uri GetImageUrl(IHtmlImageElement img)
         {
+            //try srcset first
+            Uri url = GetImageUrlFromSrcSet(img);
+            if(url != null)
+            {
+                return url;
+            }
+
+            //otherwise fall back to legacy lazyload attributes, then src
             foreach (string attrib in imgSourceAttributes)
             {
                 if (img.HasAttribute(attrib))
                 {
-                    Uri url = CreateUrl(img.GetAttribute(attrib));
+                    url = CreateUrl(img.GetAttribute(attrib));
                     if (url != null)
                     {
                         return url;
                     }
+                }
+            }
+            return null;
+        }
+
+        private Uri GetImageUrlFromSrcSet(IHtmlImageElement img)
+        {
+            if(img.SourceSet.Length > 0)
+            {
+                var srcEntry = img.SourceSet.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .FirstOrDefault();
+                if(srcEntry != null)
+                {
+                    var src = srcEntry.Split(' ').FirstOrDefault();
+                    return CreateUrl(src);
                 }
             }
             return null;
