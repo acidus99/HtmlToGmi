@@ -607,12 +607,20 @@ namespace HtmlToGmi
 
         private void ProcessNav(HtmlElement nav)
         {
-            foreach(var anchor in nav.QuerySelectorAll("a"))
+
+            var links = nav.QuerySelectorAll("a")
+                .Where(x => ShouldProcessElement(x as HtmlElement, "a"));
+            if(links.Count() > 0)
             {
                 buffer.EnsureAtLineStart();
-                ProcessAnchor(anchor as HtmlElement);
-                FlushLinkBuffer();
-                buffer.EnsureAtLineStart();
+                buffer.AppendLine("### Navigation Links");
+                foreach (var anchor in links)
+                {
+                    buffer.EnsureAtLineStart();
+                    ProcessAnchor(anchor as HtmlElement);
+                    FlushLinkBuffer();
+                    buffer.EnsureAtLineStart();
+                }
             }
         }
 
