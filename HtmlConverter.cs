@@ -70,6 +70,9 @@ namespace HtmlToGmi
 
         HtmlMetaData MetaData;
 
+        bool ProcessingDeferred = false;
+        List<HtmlElement> DeferredElements = new List<HtmlElement>();
+
         public ConvertedContent Convert(string url, string html)
             => Convert(new Uri(url), html);
 
@@ -90,9 +93,10 @@ namespace HtmlToGmi
                 ShouldCollapseNewlines = true,
                 ShouldConvertImages = true
             };
-
+            
+            ConvertDocument();
             MetaData = PopulateMetaData();
-            ConvertChildren(DocumentRoot.QuerySelector("body"));
+            
             FlushLinkBuffer();
             return new ConvertedContent
             {
@@ -103,6 +107,20 @@ namespace HtmlToGmi
                 MetaData = MetaData
             };
         }
+
+        //Converts the document, body first, and then any deferred elements
+        private void ConvertDocument()
+        {
+            ProcessingDeferred = false;
+            DeferredElements.Clear();
+            ConvertChildren(DocumentRoot.QuerySelector("body"));
+            ProcessingDeferred = true;
+            foreach (var element in DeferredElements)
+            {
+                ProcessHtmlElement(element);
+            }
+        }
+
 
         private IHtmlDocument ParseToDocument(string html)
         {
@@ -241,6 +259,10 @@ namespace HtmlToGmi
             {
                 case "a":
                     ProcessAnchor(element);
+                    break;
+
+                case "aside":
+                    ProcessAside(element);
                     break;
 
                 case "blockquote":
@@ -495,6 +517,27 @@ namespace HtmlToGmi
         private static bool IsInvisible(HtmlElement element)
            => element.GetAttribute("style")?.Contains("display:none") ?? false;
 
+        private bool DeferProcessing(HtmlElement element)
+        {
+            if(!ProcessingDeferred)
+            {
+                DeferredElements.Add(element);
+                return true;
+            }
+            return false;
+        }
+
+        private void ProcessAside(HtmlElement aside)
+        {
+            if (DeferProcessing(aside))
+            {
+                return;
+            }
+            buffer.EnsureAtLineStart();
+            buffer.AppendLine("### Aside");
+            ConvertChildren(aside);
+        }
+
         private void ProcessAnchor(HtmlElement anchor)
         {
             //is it a real hyperlink we want to use?
@@ -607,6 +650,11 @@ namespace HtmlToGmi
 
         private void ProcessNav(HtmlElement nav)
         {
+
+            if(DeferProcessing(nav))
+            {
+                return;
+            }
 
             var links = nav.QuerySelectorAll("a")
                 .Where(x => ShouldProcessElement(x as HtmlElement, "a"));
