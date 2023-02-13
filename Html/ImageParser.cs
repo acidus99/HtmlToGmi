@@ -141,7 +141,7 @@ namespace HtmlToGmi.Html
 
         private Uri GetImageUrlFromSrcSet(IHtmlImageElement img)
         {
-            if(img.SourceSet.Length > 0)
+            if(!string.IsNullOrEmpty(img.SourceSet))
             {
                 var srcEntry = img.SourceSet.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                     .FirstOrDefault();
