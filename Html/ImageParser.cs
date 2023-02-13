@@ -101,12 +101,14 @@ namespace HtmlToGmi.Html
         {
             //look for a figcaption
             var caption = Normalize(figure.QuerySelector("figcaption")?.TextContent ?? "");
-            //if we didn't get it, look for image
+            
+            if (caption != "")
+            {
+                return CaptionOrDefault(caption);
+            }
 
-            caption = GetCaptionForImage(img);
-
-            //already normalized, already defaulted
-            return caption;
+            //if we didn't get it, fallback to a caption from img tag attributes
+            return caption = GetCaptionForImage(img); ;
         }
 
         /// <summary>
