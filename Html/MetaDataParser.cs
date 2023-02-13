@@ -36,7 +36,7 @@ namespace HtmlToGmi.Html
 					OpenGraphImage = CreateUrl(OpenGraph.Image),
 					OpenGraphTitle = Normalize(OpenGraph.Title),
 					OpenGraphSiteName = Normalize(OpenGraph.SiteName),
-					OpenGraphType = Normalize(OpenGraph.Type),
+					OpenGraphType = Normalize(OpenGraph.Type).ToLower(),
 				};
 			}
 			return new HtmlMetaData();
