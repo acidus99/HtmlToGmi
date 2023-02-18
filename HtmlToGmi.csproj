@@ -15,12 +15,18 @@
     <None Remove=".gitattributes" />
     <None Remove=".DS_Store" />
     <None Remove=".gitignore" />
+    <None Remove="Encoding\" />
+    <None Remove="System.Text.Encoding" />
+    <None Remove="System.Text.Encoding.CodePages" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.0.1" />
+    <PackageReference Include="System.Text.Encoding" Version="4.3.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Filter\" />
+    <Folder Include="Encoding\" />
   </ItemGroup>
 </Project>
