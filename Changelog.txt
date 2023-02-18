@@ -15,3 +15,5 @@
 - Fixed: Extra newlines added when appending multi-line text
 - Feature: Convert <nav> into list of all contained <a> links
 - Fixed: Drop surround italics if there is no content (e.g. fontawesome)
+- Feature: Support srcset for image tags (currently selects the smallest/first)
+- Feature: Reorders content based on priority (moves asides/navs to bottom)
