@@ -17,3 +17,4 @@
 - Fixed: Drop surround italics if there is no content (e.g. fontawesome)
 - Feature: Support srcset for image tags (currently selects the smallest/first)
 - Feature: Reorders content based on priority (moves asides/navs to bottom)
+- Fixed: After H1/H2.H3 tags, ensure we are on a new line, so text nodes aren't styled as part of the header line

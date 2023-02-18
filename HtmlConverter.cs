@@ -300,18 +300,21 @@ namespace HtmlToGmi
                     buffer.EnsureAtLineStart();
                     buffer.SetLinePrefix("# ");
                     ConvertChildren(element);
+                    buffer.EnsureAtLineStart();
                     break;
 
                 case "h2":
                     buffer.EnsureAtLineStart();
                     buffer.SetLinePrefix("## ");
                     ConvertChildren(element);
+                    buffer.EnsureAtLineStart();
                     break;
 
                 case "h3":
                     buffer.EnsureAtLineStart();
                     buffer.SetLinePrefix("### ");
                     ConvertChildren(element);
+                    buffer.EnsureAtLineStart();
                     break;
 
                 case "hr":
