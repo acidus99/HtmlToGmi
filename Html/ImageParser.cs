@@ -129,7 +129,7 @@ namespace HtmlToGmi.Html
             {
                 if (img.HasAttribute(attrib))
                 {
-                    url = CreateUrl(img.GetAttribute(attrib));
+                    url = CreateHttpUrl(img.GetAttribute(attrib));
                     if (url != null)
                     {
                         return url;
@@ -148,7 +148,7 @@ namespace HtmlToGmi.Html
                 if(srcEntry != null)
                 {
                     var src = srcEntry.Split(' ').FirstOrDefault();
-                    return CreateUrl(src);
+                    return CreateHttpUrl(src);
                 }
             }
             return null;

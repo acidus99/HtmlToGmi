@@ -38,7 +38,7 @@ namespace HtmlToGmi.NewsFeeds
             var ret = new Feed
             {
                 Description = NormalizeHtmlText(sourceFeed.Description),
-                FeaturedImage = CreateUrl(sourceFeed.ImageUrl),
+                FeaturedImage = CreateHttpUrl(sourceFeed.ImageUrl),
                 OriginalSize = sourceFeed.OriginalDocument.Length,
                 Title = NormalizeHtmlText(sourceFeed.Title),
                 SiteName = NormalizeHtmlText(sourceFeed.Copyright)
@@ -57,7 +57,7 @@ namespace HtmlToGmi.NewsFeeds
             => new FeedItem
             {
                 Title = NormalizeHtmlText(sourceItem.Title),
-                Url = CreateUrl(GetArticleLink(sourceItem)),
+                Url = CreateHttpUrl(GetArticleLink(sourceItem)),
 
                 Description = NormalizeHtmlText(sourceItem.Description),
                 Published = sourceItem.PublishingDate,
@@ -80,7 +80,7 @@ namespace HtmlToGmi.NewsFeeds
                 return null;
             }
 
-            var url = CreateUrl(sourceEnclosure.Url);
+            var url = CreateHttpUrl(sourceEnclosure.Url);
             if (url == null)
             {
                 //a enclosure with out a valid URL should be discarded/ignored

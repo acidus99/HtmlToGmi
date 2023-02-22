@@ -22,7 +22,7 @@ namespace HtmlToGmi
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        protected Uri CreateUrl(string url)
+        protected Uri CreateHttpUrl(string url)
         {
             try
             {

@@ -33,7 +33,7 @@ namespace HtmlToGmi.Html
 					MetaTitle = GetMetaTitle(),
 
 					OpenGraphDescription = NormalizeHtmlText(OpenGraph.Description),
-					OpenGraphImage = CreateUrl(OpenGraph.Image),
+					OpenGraphImage = CreateHttpUrl(OpenGraph.Image),
 					OpenGraphTitle = NormalizeHtmlText(OpenGraph.Title),
 					OpenGraphSiteName = NormalizeHtmlText(OpenGraph.SiteName),
 					OpenGraphType = NormalizeHtmlText(OpenGraph.Type).ToLower(),
@@ -56,7 +56,7 @@ namespace HtmlToGmi.Html
                 .FirstOrDefault();
 
 			return (link != null) ?
-				CreateUrl(link.GetAttribute("href")) :
+                CreateHttpUrl(link.GetAttribute("href")) :
 				null;
         }
 
