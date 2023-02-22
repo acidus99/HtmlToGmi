@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Net;
+using System.Text.RegularExpressions;
+
 namespace HtmlToGmi
 {
 	public abstract class AbstractParser
 	{
         //the URL of the page we are parsing content from. This is used to properly resolve URLs
         protected Uri BaseUrl;
+
+        private static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
         public AbstractParser(Uri baseUrl = null)
         {
@@ -50,11 +55,51 @@ namespace HtmlToGmi
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        protected string Normalize(string s)
+        protected string NormalizeText(string s)
         {
             s = s?.Trim() ?? "";
-            return TextConverter.CollapseWhitespace(s);
+            return CollapseWhitespace(s);
         }
+
+
+        /// <summary>
+        /// normalizes a string that can contain HTML tags to something that is safe to use in a single line of gemtext
+        /// - HTML decodes it
+        /// - strips any remaining HTML tags
+        /// - converts \n, \t, and \r tabs to space
+        /// - collapses runs of whitespace into a single space
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        protected string NormalizeHtmlText(string s)
+        {
+            if (s == null)
+            {
+                return "";
+            }
+
+            //decode
+            s = WebUtility.HtmlDecode(s);
+            //strip tags
+            s = Regex.Replace(s, @"<[^>]*>", "");
+            if (s.Contains('\t'))
+            {
+                s.Replace('\t', ' ');
+            }
+            return CollapseWhitespace(s);
+        }
+
+        protected string CollapseWhitespace(string text)
+        {
+            if (text.Length > 0 && (text.Contains('\n') || text.Contains('\r')))
+            {
+                text = text.Replace('\r', ' ');
+                text = text.Replace('\n', ' ');
+                text = whitespace.Replace(text, " ");
+            }
+            return text;
+        }
+
 
     }
 }

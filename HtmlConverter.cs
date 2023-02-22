@@ -18,7 +18,7 @@ namespace HtmlToGmi
     /// <summary>
     /// Converts HTML into Gemtext
     /// </summary>
-    public class HtmlConverter
+    public class HtmlConverter : AbstractParser
     {
         private static readonly string[] blockElements = new string[] { "address", "article", "aside", "blockquote", "canvas", "dd", "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "noscript", "ol", "p", "pre", "section", "table", "tfoot", "ul", "video" };
 
@@ -57,7 +57,6 @@ namespace HtmlToGmi
 
         GemtextBuffer buffer = new GemtextBuffer();
         ImageParser imageParser;
-        Uri BaseUrl;
 
         bool inPreformatted = false;
 
@@ -72,6 +71,11 @@ namespace HtmlToGmi
 
         bool ProcessingDeferred = false;
         List<HtmlElement> DeferredElements = new List<HtmlElement>();
+
+
+        public HtmlConverter(Uri baseUri = null)
+            : base(baseUri)
+        { }
 
         public ConvertedContent Convert(string url, string html)
             => Convert(new Uri(url), html);
@@ -219,7 +223,7 @@ namespace HtmlToGmi
                 //if its not only whitespace add it.
                 if (text.Trim().Length > 0)
                 {
-                    text = TextConverter.CollapseWhitespace(text);
+                    text = CollapseWhitespace(text);
                     if (buffer.AtLineStart)
                     {
                         buffer.Append(text.TrimStart());

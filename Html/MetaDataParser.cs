@@ -32,18 +32,18 @@ namespace HtmlToGmi.Html
 					FeedUrl = FindFeedUrl(),
 					MetaTitle = GetMetaTitle(),
 
-					OpenGraphDescription = Normalize(OpenGraph.Description),
+					OpenGraphDescription = NormalizeHtmlText(OpenGraph.Description),
 					OpenGraphImage = CreateUrl(OpenGraph.Image),
-					OpenGraphTitle = Normalize(OpenGraph.Title),
-					OpenGraphSiteName = Normalize(OpenGraph.SiteName),
-					OpenGraphType = Normalize(OpenGraph.Type).ToLower(),
+					OpenGraphTitle = NormalizeHtmlText(OpenGraph.Title),
+					OpenGraphSiteName = NormalizeHtmlText(OpenGraph.SiteName),
+					OpenGraphType = NormalizeHtmlText(OpenGraph.Type).ToLower(),
 				};
 			}
 			return new HtmlMetaData();
 		}
 
 		private string GetMetaTitle()
-			=> Normalize(Head.QuerySelector("title")?.TextContent);
+			=> NormalizeHtmlText(Head.QuerySelector("title")?.TextContent);
 
 		private Uri FindFeedUrl()
         {

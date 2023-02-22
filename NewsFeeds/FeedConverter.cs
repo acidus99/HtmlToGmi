@@ -37,11 +37,11 @@ namespace HtmlToGmi.NewsFeeds
         {
             var ret = new Feed
             {
-                Description = Normalize(sourceFeed.Description),
+                Description = NormalizeHtmlText(sourceFeed.Description),
                 FeaturedImage = CreateUrl(sourceFeed.ImageUrl),
                 OriginalSize = sourceFeed.OriginalDocument.Length,
-                Title = Normalize(sourceFeed.Title),
-                SiteName = Normalize(sourceFeed.Copyright)
+                Title = NormalizeHtmlText(sourceFeed.Title),
+                SiteName = NormalizeHtmlText(sourceFeed.Copyright)
             };
 
             //ensure items have valid URLs
@@ -56,10 +56,10 @@ namespace HtmlToGmi.NewsFeeds
         private FeedItem CreateFeedItem(CodeHollow.FeedReader.FeedItem sourceItem)
             => new FeedItem
             {
-                Title = Normalize(sourceItem.Title),
+                Title = NormalizeHtmlText(sourceItem.Title),
                 Url = CreateUrl(GetArticleLink(sourceItem)),
 
-                Description = Normalize(sourceItem.Description),
+                Description = NormalizeHtmlText(sourceItem.Description),
                 Published = sourceItem.PublishingDate,
 
                 Enclosure = CreateFeedEnclosure(sourceItem)

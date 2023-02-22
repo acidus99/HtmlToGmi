@@ -92,7 +92,7 @@ namespace HtmlToGmi.Html
             {
                 caption = img.GetAttribute("title") ?? "";
             }
-            caption = Normalize(caption);
+            caption = NormalizeHtmlText(caption);
 
             return CaptionOrDefault(caption);
         }
@@ -100,7 +100,7 @@ namespace HtmlToGmi.Html
         private string GetCaptionForFigure(HtmlElement figure, IElement img)
         {
             //look for a figcaption
-            var caption = Normalize(figure.QuerySelector("figcaption")?.TextContent ?? "");
+            var caption = NormalizeText(figure.QuerySelector("figcaption")?.TextContent ?? "");
             
             if (caption != "")
             {

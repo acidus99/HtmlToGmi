@@ -127,21 +127,5 @@ namespace HtmlToGmi
                 }
             }
         }
-
-        /// <summary>
-        /// Removes \r, \n, and collapses runs of white space
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static string CollapseWhitespace(string text)
-        {
-            if (text.Length > 0 && (text.Contains('\n') || text.Contains('\r')))
-            {
-                text = text.Replace('\r', ' ');
-                text = text.Replace('\n', ' ');
-                text = whitespace.Replace(text, " ");
-            }
-            return text;
-        }
     }
 }
