@@ -77,9 +77,6 @@ namespace HtmlToGmi
             : base(baseUri)
         { }
 
-        public ConvertedContent Convert(string url, string html)
-            => Convert(new Uri(url), html);
-
         public ConvertedContent Convert(Uri url, string html)
             => Convert(url, ParseToDocument(html));
 
