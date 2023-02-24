@@ -1,3 +1,11 @@
+
+http://mjhibbett.co.uk/doom/index.php
+	- image inside a block quote? what else can be inside a BQ
+
+
+Tables for layout. I should convert these into a series of DIVs
+
+
 https://apjjf.org/-Mark-Selden/3173/article.html
 
  	- Number of article hyperlinks seems wrong
@@ -12,3 +20,6 @@ https://www.hollywoodreporter.com/news/general-news/jeremy-clarkson-meghan-markl
 	Just gross output in general (the bottom)
 	Links for "TV" is a anchor all by itself
 
+Add video support (NYTimes)
+
+better handle srcset and sizes for images
