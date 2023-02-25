@@ -72,6 +72,8 @@ namespace HtmlToGmi
         bool ProcessingDeferred = false;
         List<HtmlElement> DeferredElements = new List<HtmlElement>();
 
+        bool InOrderedList = false;
+        int listItemNumber = 0;
 
         public HtmlConverter(Uri baseUri = null)
             : base(baseUri)
@@ -135,7 +137,8 @@ namespace HtmlToGmi
             bool ret = false;
             if (linkBuffer.Count > 0 && !buffer.InBlockquote)
             {
-                buffer.EnsureAtLineStart();
+                //need to reset prefix because line must start with link line character
+                buffer.EnsureAtLineStart(true);
 
                 //lets see if the last line is equal to the link text
                 if (CanReplaceLastLine())
@@ -267,10 +270,11 @@ namespace HtmlToGmi
                     break;
 
                 case "blockquote":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.InBlockquote = true;
                     ConvertChildren(element);
                     buffer.InBlockquote = false;
+                    buffer.EnsureAtLineStart(true);
                     break;
 
                 case "br":
@@ -278,10 +282,10 @@ namespace HtmlToGmi
                     break;
 
                 case "dd":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.SetLinePrefix("* ");
                     ConvertChildren(element);
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     break;
 
                 case "dt":
@@ -298,28 +302,28 @@ namespace HtmlToGmi
                     break;
 
                 case "h1":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.SetLinePrefix("# ");
                     ConvertChildren(element);
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     break;
 
                 case "h2":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.SetLinePrefix("## ");
                     ConvertChildren(element);
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     break;
 
                 case "h3":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.SetLinePrefix("### ");
                     ConvertChildren(element);
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     break;
 
                 case "hr":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.AppendLine("-=-=-=-=-=-=-=-=-=-=-");
                     break;
 
@@ -349,7 +353,7 @@ namespace HtmlToGmi
                     break;
 
                 case "ol":
-                    ProcessList(element);
+                    ProcessOrderedList(element);
                     break;
 
                 case "p":
@@ -370,11 +374,11 @@ namespace HtmlToGmi
                     break;
 
                 case "pre":
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     buffer.AppendLine("```");
                     inPreformatted = true;
                     ConvertChildren(element);
-                    buffer.EnsureAtLineStart();
+                    buffer.EnsureAtLineStart(true);
                     inPreformatted = false;
                     buffer.AppendLine("```");
                     break;
@@ -641,20 +645,20 @@ namespace HtmlToGmi
 
         private void ProcessLi(HtmlElement li)
         {
-            if (listDepth == 1)
+            var prefix = "* ";
+            if(listDepth > 1)
             {
-                buffer.EnsureAtLineStart();
-                buffer.SetLinePrefix("* ");
-                ConvertChildren(li);
-                buffer.EnsureAtLineStart();
+                prefix += "* ";
             }
-            else
+            if(InOrderedList)
             {
-                buffer.EnsureAtLineStart();
-                buffer.SetLinePrefix("* * ");
-                ConvertChildren(li);
-                buffer.EnsureAtLineStart();
+                prefix += $"{listItemNumber}. ";
+                listItemNumber++;
             }
+            buffer.EnsureAtLineStart();
+            buffer.SetLinePrefix(prefix);
+            ConvertChildren(li);
+            buffer.EnsureAtLineStart();
         }
 
         private void ProcessNav(HtmlElement nav)
@@ -679,6 +683,18 @@ namespace HtmlToGmi
                     buffer.EnsureAtLineStart();
                 }
             }
+        }
+
+        private void ProcessOrderedList(HtmlElement ol)
+        {
+            InOrderedList = true;
+
+            if (!int.TryParse(ol.GetAttribute("start"), out listItemNumber))
+            {
+                listItemNumber = 1;
+            }
+            ProcessList(ol);
+            InOrderedList = false;
         }
 
         private void ProcessList(HtmlElement element)

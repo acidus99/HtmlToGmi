@@ -89,9 +89,9 @@ namespace HtmlToGmi
             sb.AppendLine(s);
         }
 
-        public void EnsureAtLineStart()
+        public void EnsureAtLineStart(bool resetPrefix = false)
         {
-            if(AtLineStart && linePrefex != null)
+            if(resetPrefix)
             {
                 linePrefex = null;
             }
