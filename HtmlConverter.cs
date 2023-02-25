@@ -553,6 +553,12 @@ namespace HtmlToGmi
 
         private void ProcessAnchor(HtmlElement anchor)
         {
+            //should we do anything at all with this?
+            if(!ShouldRenderAnchorText(anchor))
+            {
+                return;
+            }
+
             //is it a real hyperlink we want to use?
             Uri url = CreateUrl(anchor);
 
@@ -610,6 +616,19 @@ namespace HtmlToGmi
             }
 
             BodyLinks.AddLink(link);
+        }
+
+        private bool ShouldRenderAnchorText(HtmlElement a)
+        {
+            if (a.GetAttribute("role")?.ToLower() == "doc-backlink")
+            {
+                return false;
+            }
+            else if (a.GetAttribute("rev")?.ToLower() == "footnote")
+            {
+                return false;
+            }
+            return true;
         }
 
         private void ProcessGenericTag(HtmlElement element)
