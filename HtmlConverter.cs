@@ -628,6 +628,11 @@ namespace HtmlToGmi
             {
                 return false;
             }
+            //many platforms just use this character
+            else if(a.TextContent == "↩")
+            {
+                return false;
+            }
             return true;
         }
 
@@ -657,7 +662,7 @@ namespace HtmlToGmi
             if (image != null && ShouldUseImage(image))
             {
                 Images.Add(image);
-                buffer.EnsureAtLineStart();
+                buffer.EnsureAtLineStart(true);
                 buffer.AppendLine($"=> {GetImageUrl(image.Source)} Image: {image.Caption}");
             }
         }
