@@ -18,3 +18,5 @@
 - Feature: Support srcset for image tags (currently selects the smallest/first)
 - Feature: Reorders content based on priority (moves asides/navs to bottom)
 - Fixed: After H1/H2.H3 tags, ensure we are on a new line, so text nodes aren't styled as part of the header line
+- Feature: HR tag support
+- Feature: OL Tags outputs list line + proper number
