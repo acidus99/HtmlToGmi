@@ -13,11 +13,6 @@ namespace HtmlToGmi
 	public static class TagStripper
 	{
 
-		public static void RemoveProblemTags(IElement element)
-        {
-			RemoveMatchingTags(element, "svg");
-		}
-
 		public static void RemoveNavigation(IElement element)
         {
             //now, remove all the navigation stuff
