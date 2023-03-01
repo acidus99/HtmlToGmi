@@ -16,6 +16,15 @@ namespace HtmlToGmi
             BaseUrl = baseUrl;
         }
 
+        protected bool IsExternalLink(Uri url)
+        {
+            if (BaseUrl == null)
+            {
+                throw new NullReferenceException("baseUrl is ");
+            }
+            return !url.Host.EndsWith(BaseUrl.Host);
+        }
+
         /// <summary>
         /// Creates a fully qualified, HTTP(S) URL from a string.
         /// The base URL for the page is used to resolve any relative urls
