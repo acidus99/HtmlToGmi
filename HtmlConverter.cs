@@ -4,7 +4,6 @@ using System.Linq;
 using AngleSharp.Html.Dom;
 using AngleSharp.Dom;
 
-using HtmlToGmi.Filter;
 using HtmlToGmi.Models;
 using HtmlToGmi.Html;
 using AngleSharp;
@@ -24,6 +23,15 @@ namespace HtmlToGmi
 
         public bool ShouldRenderHyperlinks { get; set; } = true;
         public bool AllowDuplicateLinks { get; set; } = false;
+
+        /// <summary>
+        /// Aria roles which mean the element should be skipped
+        /// </summary>
+        public List<string> RolesToSkip = new List<string>
+        {
+            "alert", "alertdialog", "button", "checkbox", "dialog", "form",
+            "log", "search", "searchbox", "slider", "switch"
+        };
 
         /// <summary>
         /// Optional function to call which rewrites any anchor tag hyperlinks the converter outputs
@@ -450,12 +458,6 @@ namespace HtmlToGmi
                 return false;
             }
 
-            //see if we are explicitly filtering
-            if (!DomFilter.Global.IsElementAllowed(element, normalizedTagName))
-            {
-                return false;
-            }
-
             //ARIA telling us its hidden to screen readers
             if(element.HasAttribute("hidden") || (element.GetAttribute("aria-hidden") ?? "") == "true")
             {
@@ -487,28 +489,7 @@ namespace HtmlToGmi
         }
 
         private bool ShouldSkipRole(string role)
-        {
-            if (string.IsNullOrEmpty(role))
-            {
-                return false;
-            }
-            if (role is
-                "alert" or
-                "alertdialog" or
-                "button" or
-                "checkbox" or
-                "dialog" or
-                "form" or
-                "log" or
-                "search" or
-                "searchbox" or
-                "slider" or
-                "switch")
-            {
-                return true;
-            }
-            return false;
-        }
+            => RolesToSkip.Contains(role);
 
         //should we use apply italic formatting around this element?
         private bool ShouldUseItalics(HtmlElement element)
