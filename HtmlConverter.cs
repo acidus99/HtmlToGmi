@@ -33,6 +33,34 @@ namespace HtmlToGmi
             "log", "search", "searchbox", "slider", "switch"
         };
 
+        public List<string> ElementsToSkip = new List<string>
+        {
+            //header stuff
+            "head", "meta", "link",
+
+            //presentational info
+            "style",
+
+            //interactivity
+            "applet",
+            "dialog",
+            "embed",
+            "noembed",
+            "object",
+            "param",
+            "script",
+            "template",
+
+            //noscript is rarely valuable, as it usually just tells you to enable JS
+            "noscript",
+
+            //form stuff
+            "button", "datalist", "fieldset", "form", "input", "keygen", "label", "legend", "optgroup", "option", "select", "textarea",
+
+            //special cases
+            "figcaption", //we have special logic to handle figures. If we encounter a figcaption outside of a figure we want to ignore it
+        };
+
         /// <summary>
         /// Optional function to call which rewrites any anchor tag hyperlinks the converter outputs
         /// </summary>
@@ -260,7 +288,7 @@ namespace HtmlToGmi
         {
             var nodeName = element?.NodeName.ToLower();
 
-            if (!ShouldProcessElement(element, nodeName))
+            if (ShouldSkipElement(element, nodeName))
             {
                 return;
             }
@@ -413,34 +441,6 @@ namespace HtmlToGmi
                     ProcessList(element);
                     break;
 
-                //skipping tags
-
-                //header stuff
-                case "head":
-                case "meta":
-                case "link":
-                case "style":
-
-                //form stuff
-                case "button":
-                case "datalist":
-                case "fieldset":
-                case "form":
-                case "input":
-                case "label":
-                case "legend":
-                case "optgroup":
-                case "option":
-                case "select":
-                case "textarea":
-
-                //body content
-                case "figcaption": //we have special logic to handle figures. If we encounter a figcaption outside of a figure we want to ignore it
-                case "noscript": //noscript is rarely valuable, as it usually just tells you to enable JS
-                case "script":
-                case "svg":
-                    return;
-
                 default:
                     ProcessGenericTag(element);
                     break;
@@ -449,34 +449,39 @@ namespace HtmlToGmi
             HandlePendingLinks(element);
         }
 
-        public bool ShouldProcessElement(HtmlElement element, string normalizedTagName)
+        public bool ShouldSkipElement(HtmlElement element, string tagName)
         {
             //A MathElement is of type element, but it not an HtmlElement
             //so it will be null
             if (element == null)
             {
-                return false;
+                return true;
+            }
+
+            if(ElementsToSkip.Contains(tagName))
+            {
+                return true;
             }
 
             //ARIA telling us its hidden to screen readers
-            if(element.HasAttribute("hidden") || (element.GetAttribute("aria-hidden") ?? "") == "true")
+            if(element.IsHidden || (element.GetAttribute("aria-hidden") ?? "") == "true")
             {
-                return false;
+                return true;
             }
 
             //check the ARIA role
             if (ShouldSkipRole(element.GetAttribute("role")?.ToLower()))
             {
-                return false;
+                return true;
             }
 
             //is it visible?
             if (IsInvisible(element))
             {
-                return false;
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         private void HandlePendingLinks(HtmlElement element)
@@ -682,7 +687,7 @@ namespace HtmlToGmi
             }
 
             var links = nav.QuerySelectorAll("a")
-                .Where(x => ShouldProcessElement(x as HtmlElement, "a"));
+                .Where(x => !ShouldSkipElement(x as HtmlElement, "a"));
             if(links.Count() > 0)
             {
                 buffer.EnsureAtLineStart();
