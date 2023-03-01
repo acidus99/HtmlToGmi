@@ -38,7 +38,7 @@ namespace HtmlToGmi
         /// <summary>
         /// All images found in the converted text
         /// </summary>
-        List<ImageLink> Images = new List<ImageLink>();
+        List<ImageLink> images = new List<ImageLink>();
 
         /// <summary>
         /// tmp buffer used to hold links in the current block of text
@@ -48,7 +48,7 @@ namespace HtmlToGmi
         /// <summary>
         /// Unique, "best", list of anchor hyperlinks found in the converted text
         /// </summary>
-        LinkCollection BodyLinks = new LinkCollection();
+        LinkCollection bodyLinks = new LinkCollection();
 
         /// <summary>
         /// tracks how deep we are in a nested list
@@ -62,17 +62,17 @@ namespace HtmlToGmi
 
         int linkCounter = 0;
 
-        IHtmlDocument Document;
-        IElement DocumentRoot;
+        IHtmlDocument document;
+        IElement documentRoot;
 
         TextConverter linkTextExractor;
 
-        HtmlMetaData MetaData;
+        HtmlMetaData metaData;
 
-        bool ProcessingDeferred = false;
-        List<HtmlElement> DeferredElements = new List<HtmlElement>();
+        bool isProcessingDeferred = false;
+        List<HtmlElement> deferredElements = new List<HtmlElement>();
 
-        bool InOrderedList = false;
+        bool isInOrderedList = false;
         int listItemNumber = 0;
 
         public HtmlConverter(Uri baseUri = null)
@@ -84,10 +84,10 @@ namespace HtmlToGmi
 
         public ConvertedContent Convert(Uri url, IHtmlDocument document)
         {
-            Document = document;
+            this.document = document;
             // AngleSharp creates well-formed HTML documents, with an html, head
             // and body tags. 
-            DocumentRoot = Document.FirstElementChild;
+            documentRoot = this.document.FirstElementChild;
 
             BaseUrl = url;
             imageParser = new ImageParser(url);
@@ -98,27 +98,27 @@ namespace HtmlToGmi
             };
             
             ConvertDocument();
-            MetaData = PopulateMetaData();
+            metaData = PopulateMetaData();
             
             FlushLinkBuffer();
             return new ConvertedContent
             {
                 Url = url,
                 Gemtext = buffer.Content.TrimEnd(),
-                Images = Images,
-                Links = BodyLinks.GetLinks(),
-                MetaData = MetaData
+                Images = images,
+                Links = bodyLinks.GetLinks(),
+                MetaData = metaData
             };
         }
 
         //Converts the document, body first, and then any deferred elements
         private void ConvertDocument()
         {
-            ProcessingDeferred = false;
-            DeferredElements.Clear();
-            ConvertChildren(DocumentRoot.QuerySelector("body"));
-            ProcessingDeferred = true;
-            foreach (var element in DeferredElements)
+            isProcessingDeferred = false;
+            deferredElements.Clear();
+            ConvertChildren(documentRoot.QuerySelector("body"));
+            isProcessingDeferred = true;
+            foreach (var element in deferredElements)
             {
                 ProcessHtmlElement(element);
             }
@@ -532,9 +532,9 @@ namespace HtmlToGmi
 
         private bool DeferProcessing(HtmlElement element)
         {
-            if(!ProcessingDeferred)
+            if(!isProcessingDeferred)
             {
-                DeferredElements.Add(element);
+                deferredElements.Add(element);
                 return true;
             }
             return false;
@@ -622,7 +622,7 @@ namespace HtmlToGmi
                 images.ForEach(x => HandleImage(x));
             }
 
-            BodyLinks.AddLink(link);
+            bodyLinks.AddLink(link);
         }
 
         private bool ShouldRenderAnchorText(HtmlElement a)
@@ -668,7 +668,7 @@ namespace HtmlToGmi
         {
             if (image != null && ShouldUseImage(image))
             {
-                Images.Add(image);
+                images.Add(image);
                 buffer.EnsureAtLineStart(true);
                 buffer.AppendLine($"=> {GetImageUrl(image.Source)} Image: {image.Caption}");
             }
@@ -681,7 +681,7 @@ namespace HtmlToGmi
             {
                 prefix += "* ";
             }
-            if(InOrderedList)
+            if(isInOrderedList)
             {
                 prefix += $"{listItemNumber}. ";
                 listItemNumber++;
@@ -718,14 +718,14 @@ namespace HtmlToGmi
 
         private void ProcessOrderedList(HtmlElement ol)
         {
-            InOrderedList = true;
+            isInOrderedList = true;
 
             if (!int.TryParse(ol.GetAttribute("start"), out listItemNumber))
             {
                 listItemNumber = 1;
             }
             ProcessList(ol);
-            InOrderedList = false;
+            isInOrderedList = false;
         }
 
         private void ProcessList(HtmlElement element)
@@ -809,7 +809,7 @@ namespace HtmlToGmi
         }
 
         public bool ShouldUseImage(ImageLink image)
-            => (Images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
+            => (images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
 
         public static bool ShouldDisplayAsBlock(HtmlElement element)
         {
@@ -858,7 +858,7 @@ namespace HtmlToGmi
                 return null;
             }
 
-            if (!AllowDuplicateLinks && BodyLinks.ContainsUrl(url))
+            if (!AllowDuplicateLinks && bodyLinks.ContainsUrl(url))
             {
                 return null;
             }
@@ -886,7 +886,7 @@ namespace HtmlToGmi
 
         private HtmlMetaData PopulateMetaData()
         {
-            var metaParser = new MetaDataParser(BaseUrl, DocumentRoot.QuerySelector("head"));
+            var metaParser = new MetaDataParser(BaseUrl, documentRoot.QuerySelector("head"));
             return metaParser.GetMetaData();
         }
 
