@@ -578,6 +578,13 @@ namespace HtmlToGmi
                 images = linkTextExractor.Images;
             }
 
+            //if we don't have link text after all that, this is probably not a valuable link
+            //so skip it
+            if (string.IsNullOrEmpty(linkText))
+            {
+                return;
+            }
+
             linkCounter++;
             var link = new Hyperlink
             {
