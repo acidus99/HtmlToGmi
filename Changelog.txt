@@ -22,3 +22,4 @@
 - Feature: OL Tags outputs list line + proper number
 - Feature: Converts layout tables as normal HTML instead of into a preformatted text table
 - Feature: Skips Layout/spacer images
+- Feature: Convert client-side image maps to list of hyperlinks

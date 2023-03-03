@@ -57,8 +57,9 @@ namespace HtmlToGmi
             //form stuff
             "button", "datalist", "fieldset", "form", "input", "keygen", "label", "legend", "optgroup", "option", "select", "textarea",
 
-            //special cases
-            "figcaption", //we have special logic to handle figures. If we encounter a figcaption outside of a figure we want to ignore it
+            //we have special logic to handle these. We shouldn't encounter this tags by themselves while parsing, so ignore them
+            "area",
+            "figcaption",
         };
 
         /// <summary>
@@ -298,6 +299,10 @@ namespace HtmlToGmi
                     ProcessLi(element);
                     break;
 
+                case "map":
+                    ProcessMap(element);
+                    break;
+
                 case "nav":
                     ProcessNav(element);
                     break;
@@ -407,7 +412,7 @@ namespace HtmlToGmi
             }
 
             //is it a real hyperlink we want to use?
-            Uri url = CreateUrl(anchor);
+            Uri url = CreateUrl(anchor.GetAttribute("href"));
 
             if (url == null)
             {
@@ -490,10 +495,10 @@ namespace HtmlToGmi
             return true;
         }
 
-        private Uri CreateUrl(HtmlElement a)
+        private Uri CreateUrl(string href)
         {
             Uri url = null;
-            var href = a.GetAttribute("href") ?? "";
+            href = href ?? "";
 
             //Skip navigation links to parts of the same page
             if (href.StartsWith('#'))
@@ -712,6 +717,54 @@ namespace HtmlToGmi
         }
 
         #endregion
+
+        private void ProcessMap(HtmlElement map)
+        {
+            var links = map.QuerySelectorAll("area")
+                .Select(x => ParseAreaToLink(x as HtmlElement))
+                .Where(x => x != null);
+
+            //also add the links to the list of body links
+            bodyLinks.AddLinks(links);
+
+            if(ShouldRenderHyperlinks)
+            {
+                buffer.EnsureAtLineStart(true);
+                buffer.AppendLine("Image Map Links:");
+                foreach (var link in links)
+                {
+                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.Text}");
+                    //rollback linkcounter
+                    linkCounter--;
+                }
+                buffer.EnsureAtLineStart(true);
+            }
+        }
+
+        private Hyperlink ParseAreaToLink(HtmlElement area)
+        {
+            var url = CreateUrl(area.GetAttribute("href"));
+            if (url == null)
+            {
+                //nothing to do here so more on
+                return null;
+            }
+
+            var linkText = area.GetAttribute("alt") ?? "";
+            if(linkText == "")
+            {
+                linkText = area.Title ?? "";
+            }
+
+            linkCounter++;
+            return new Hyperlink
+            {
+                OrderDetected = linkCounter,
+                Text = linkText,
+                Url = url,
+                IsExternal = IsExternalLink(url)
+            };
+        }
 
         private void ProcessNav(HtmlElement nav)
         {
