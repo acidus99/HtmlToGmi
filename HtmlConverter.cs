@@ -806,9 +806,30 @@ namespace HtmlToGmi
             }
         }
 
+        #region Table 
+
         private void ProcessTable(HtmlElement element)
         {
-            //TODO: sanity check table
+            IHtmlTableElement table = element as IHtmlTableElement;
+            if (TableReducer.IsLayoutTable(table))
+            {
+                ProcessLayoutTable(table);
+            }
+            else
+            {
+                ProcessDateTable(element);
+            }
+        }
+
+        private void ProcessLayoutTable(IHtmlTableElement table)
+        {
+            var reducer = new TableReducer();
+            var div = reducer.ConvertTable(table);
+            ConvertChildren(div);
+        }
+
+        private void ProcessDateTable(HtmlElement element)
+        {
             TableParser parser = new TableParser();
             var table = parser.ParseTable(element);
             if (table.Caption == "")
@@ -823,6 +844,9 @@ namespace HtmlToGmi
                 buffer.EnsureAtLineStart();
             }
         }
+
+        #endregion
+
 
         private void ProcessUnderline(HtmlElement u)
         {
