@@ -654,7 +654,8 @@ namespace HtmlToGmi
             {
                 images.Add(image);
                 buffer.EnsureAtLineStart(true);
-                buffer.AppendLine($"=> {GetImageUrl(image.Source)} Image: {image.Caption}");
+                var label = image.IsMap ? "Image Map" : "Image";
+                buffer.AppendLine($"=> {GetImageUrl(image.Source)} {label}: {image.Caption}");
             }
         }
 

@@ -37,6 +37,7 @@ namespace HtmlToGmi.Html
             return new ImageLink
             {
                 Caption = GetCaptionForImage(img),
+                IsMap = IsImageMap(img),
                 Source = url
             };
         }
@@ -67,9 +68,13 @@ namespace HtmlToGmi.Html
             return new ImageLink
             {
                 Caption = GetCaptionForFigure(figure, img),
+                IsMap = IsImageMap(img),
                 Source = url
             };
         }
+
+        private bool IsImageMap(IHtmlImageElement img)
+            => (img.UseMap?.Length > 0);
 
         /// <summary>
         /// Uses text, or default text, if text not present
