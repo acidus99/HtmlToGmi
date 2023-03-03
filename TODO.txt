@@ -23,3 +23,17 @@ https://www.hollywoodreporter.com/news/general-news/jeremy-clarkson-meghan-markl
 Add video support (NYTimes)
 
 better handle srcset and sizes for images
+
+Tags to handle:
+	strong/em
+	video (NYTs seems to use it)
+	picture
+
+revisit how I handle DD/DT
+
+
+
+table for layout:
+https://nothings.org/gamedev/thief_rendering.html
+http://www.paulgraham.com
+	
