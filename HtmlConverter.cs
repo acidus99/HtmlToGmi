@@ -640,11 +640,17 @@ namespace HtmlToGmi
           => HandleImage(imageParser.ParseFigure(figure));
 
         private void ProcessImg(IHtmlImageElement img)
-            => HandleImage(imageParser.ParseImg(img));
+        {
+            if(IsPlaceholderImage(img))
+            {
+                return;
+            }
+            HandleImage(imageParser.ParseImg(img));
+        }
 
         private void HandleImage(ImageLink image)
         {
-            if (image != null && ShouldUseImage(image))
+            if (image != null && ShouldRenderImageLink(image))
             {
                 images.Add(image);
                 buffer.EnsureAtLineStart(true);
@@ -652,7 +658,12 @@ namespace HtmlToGmi
             }
         }
 
-        public bool ShouldUseImage(ImageLink image)
+        private bool IsPlaceholderImage(IHtmlImageElement img)
+            //we look for >0 because img tags with a specified width/heigh return 0
+            => (img.DisplayWidth > 0  && img.DisplayWidth < 5) ||
+                (img.DisplayHeight > 0 && img.DisplayHeight < 5);
+
+        private bool ShouldRenderImageLink(ImageLink image)
            => (images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
 
         #endregion
