@@ -115,6 +115,7 @@ namespace HtmlToGmi
             : base(baseUri)
         { }
 
+
         public ConvertedContent Convert(Uri url, string html)
             => Convert(url, ParseToDocument(html));
 
@@ -132,10 +133,10 @@ namespace HtmlToGmi
                 ShouldCollapseNewlines = true,
                 ShouldConvertImages = true
             };
-            
+
             ConvertDocument();
             metaData = PopulateMetaData();
-            
+
             FlushLinkBuffer();
             return new ConvertedContent
             {
@@ -146,6 +147,8 @@ namespace HtmlToGmi
                 MetaData = metaData
             };
         }
+
+        #region Converting Methods
 
         //Converts the document, body first, and then any deferred elements
         private void ConvertDocument()
@@ -160,67 +163,11 @@ namespace HtmlToGmi
             }
         }
 
-
         private IHtmlDocument ParseToDocument(string html)
         {
             var context = BrowsingContext.New(Configuration.Default);
             var parser = context.GetService<IHtmlParser>();
             return parser.ParseDocument(html);
-        }
-
-        private bool FlushLinkBuffer()
-        {
-            bool ret = false;
-            if (linkBuffer.Count > 0 && !buffer.InBlockquote)
-            {
-                //need to reset prefix because line must start with link line character
-                buffer.EnsureAtLineStart(true);
-
-                //lets see if the last line is equal to the link text
-                if (CanReplaceLastLine())
-                {
-                    //if so trim the last line
-                    buffer.RemoveLastLine();
-                    ret = true;
-                    var link = linkBuffer[0];
-                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.Text}");
-                    linkBuffer.Clear();
-                    //roll back found link counter
-                    linkCounter--;
-                }
-                else
-                {
-                    foreach (var link in linkBuffer)
-                    {
-                        ret = true;
-                        var hostText = "";
-                        if (BaseUrl.Host != link.Url.Host && link.Url.Scheme.StartsWith("http"))
-                        {
-                            hostText = $"({link.Url.Host}) ";
-                        }
-                        buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. {hostText}\"{link.Text}\"");
-                    }
-                    buffer.AppendLine();
-                    linkBuffer.Clear();
-                }
-            }
-            return ret;
-        }
-
-        private bool CanReplaceLastLine()
-        {
-            if(linkBuffer.Count != 1)
-            {
-                return false;
-            }
-            var lastLine = buffer.GetLastLine();
-            //bulleted lists can be converted, so trim it off
-            if(lastLine.StartsWith("* ") && lastLine.Length >=3)
-            {
-                lastLine = lastLine.Substring(2);
-            }
-
-            return lastLine == $"{linkBuffer[0].Text}[{linkBuffer[0].OrderDetected}]";
         }
 
         private void ConvertChildren(INode node)
@@ -246,10 +193,9 @@ namespace HtmlToGmi
         }
 
         private void ProcessTextNode(INode textNode)
-            => AppendText(textNode.TextContent);
-
-        private void AppendText(string text)
         {
+            var text = textNode.TextContent;
+
             if (inPreformatted)
             {
                 buffer.Append(text);
@@ -284,6 +230,8 @@ namespace HtmlToGmi
             }
         }
 
+        #endregion
+
         private void ProcessHtmlElement(HtmlElement element)
         {
             var nodeName = element?.NodeName.ToLower();
@@ -306,31 +254,19 @@ namespace HtmlToGmi
                     break;
 
                 case "blockquote":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.InBlockquote = true;
-                    ConvertChildren(element);
-                    buffer.InBlockquote = false;
-                    buffer.EnsureAtLineStart(true);
+                    ProcessBlockQuote(element);
                     break;
 
                 case "br":
-                    buffer.AppendLine();
+                    ProcessBR(element);
                     break;
 
                 case "dd":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.SetLinePrefix("* ");
-                    ConvertChildren(element);
-                    buffer.EnsureAtLineStart(true);
+                    ProcessDD(element);
                     break;
 
                 case "dt":
-                    buffer.EnsureAtLineStart();
-                    ConvertChildren(element);
-                    if (!buffer.AtLineStart)
-                    {
-                        buffer.AppendLine(":");
-                    }
+                    ProcessDT(element);
                     break;
 
                 case "figure":
@@ -338,42 +274,20 @@ namespace HtmlToGmi
                     break;
 
                 case "h1":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.SetLinePrefix("# ");
-                    ConvertChildren(element);
-                    buffer.EnsureAtLineStart(true);
-                    break;
-
                 case "h2":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.SetLinePrefix("## ");
-                    ConvertChildren(element);
-                    buffer.EnsureAtLineStart(true);
-                    break;
-
                 case "h3":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.SetLinePrefix("### ");
-                    ConvertChildren(element);
-                    buffer.EnsureAtLineStart(true);
+                case "h4":
+                case "h5":
+                case "h6":
+                    ProcessHeadingLevel(element);
                     break;
 
                 case "hr":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.AppendLine("-=-=-=-=-=-=-=-=-=-=-");
+                    ProcessHR(element);
                     break;
 
                 case "i":
-                    if (ShouldUseItalics(element))
-                    {
-                        buffer.Append("\"");
-                        ConvertChildren(element);
-                        buffer.Append("\"");
-                    }
-                    else
-                    {
-                        ConvertChildren(element);
-                    }
+                    ProcessItalics(element);
                     break;
 
                 case "img":
@@ -393,30 +307,11 @@ namespace HtmlToGmi
                     break;
 
                 case "p":
-                    buffer.EnsureAtLineStart();
-                    int size = buffer.Content.Length;
-                    ConvertChildren(element);
-                    //make sure the paragraph ends with a new line
-                    buffer.EnsureAtLineStart();
-                    if (buffer.Content.Length > size)
-                    {
-                        //add another blank line if this paragraph had content
-                        //if we had links to flush, there already is an empty line so skip
-                        if (!FlushLinkBuffer())
-                        {
-                            buffer.AppendLine();
-                        }
-                    }
+                    ProcessParagraph(element);
                     break;
 
                 case "pre":
-                    buffer.EnsureAtLineStart(true);
-                    buffer.AppendLine("```");
-                    inPreformatted = true;
-                    ConvertChildren(element);
-                    buffer.EnsureAtLineStart(true);
-                    inPreformatted = false;
-                    buffer.AppendLine("```");
+                    ProcessPre(element);
                     break;
 
                 case "sub":
@@ -432,9 +327,7 @@ namespace HtmlToGmi
                     break;
 
                 case "u":
-                    buffer.Append("_");
-                    ConvertChildren(element);
-                    buffer.Append("_");
+                    ProcessUnderline(element);
                     break;
 
                 case "ul":
@@ -449,7 +342,9 @@ namespace HtmlToGmi
             HandlePendingLinks(element);
         }
 
-        public bool ShouldSkipElement(HtmlElement element, string tagName)
+        #region Element skipping methods 
+
+        private bool ShouldSkipElement(HtmlElement element, string tagName)
         {
             //A MathElement is of type element, but it not an HtmlElement
             //so it will be null
@@ -458,13 +353,13 @@ namespace HtmlToGmi
                 return true;
             }
 
-            if(ElementsToSkip.Contains(tagName))
+            if (ElementsToSkip.Contains(tagName))
             {
                 return true;
             }
 
             //ARIA telling us its hidden to screen readers
-            if(element.IsHidden || (element.GetAttribute("aria-hidden") ?? "") == "true")
+            if (element.IsHidden || (element.GetAttribute("aria-hidden") ?? "") == "true")
             {
                 return true;
             }
@@ -484,6 +379,9 @@ namespace HtmlToGmi
             return false;
         }
 
+        private bool ShouldSkipRole(string role)
+         => RolesToSkip.Contains(role);
+
         private void HandlePendingLinks(HtmlElement element)
         {
             if(linkBuffer.Count > 0 && ShouldDisplayAsBlock(element))
@@ -493,54 +391,17 @@ namespace HtmlToGmi
             }
         }
 
-        private bool ShouldSkipRole(string role)
-            => RolesToSkip.Contains(role);
-
-        //should we use apply italic formatting around this element?
-        private bool ShouldUseItalics(HtmlElement element)
-        {
-            var siblingTag = element.NextElementSibling?.NodeName?.ToLower() ?? "";
-            if (siblingTag == "sub" || siblingTag == "sup")
-            {
-                return false;
-            }
-            //if there is no content, don't enclose it
-            if (element.TextContent.Trim().Length == 0)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
         private static bool IsInvisible(HtmlElement element)
-           => element.GetAttribute("style")?.Contains("display:none") ?? false;
+         => element.GetAttribute("style")?.Contains("display:none") ?? false;
 
-        private bool DeferProcessing(HtmlElement element)
-        {
-            if(!isProcessingDeferred)
-            {
-                deferredElements.Add(element);
-                return true;
-            }
-            return false;
-        }
+        #endregion
 
-        private void ProcessAside(HtmlElement aside)
-        {
-            if (DeferProcessing(aside))
-            {
-                return;
-            }
-            buffer.EnsureAtLineStart();
-            buffer.AppendLine("### Aside");
-            ConvertChildren(aside);
-        }
+        #region <a> Methods
 
         private void ProcessAnchor(HtmlElement anchor)
         {
             //should we do anything at all with this?
-            if(!ShouldRenderAnchorText(anchor))
+            if (!ShouldRenderAnchorText(anchor))
             {
                 return;
             }
@@ -602,8 +463,8 @@ namespace HtmlToGmi
                     linkBuffer.Add(link);
                 }
             }
-        
-            if(images != null)
+
+            if (images != null)
             {
                 images.ForEach(x => HandleImage(x));
             }
@@ -622,30 +483,161 @@ namespace HtmlToGmi
                 return false;
             }
             //many platforms just use this character
-            else if(a.TextContent == "↩")
+            else if (a.TextContent == "↩")
             {
                 return false;
             }
             return true;
         }
 
-        private void ProcessGenericTag(HtmlElement element)
+        private Uri CreateUrl(HtmlElement a)
         {
-            if (ShouldDisplayAsBlock(element))
+            Uri url = null;
+            var href = a.GetAttribute("href") ?? "";
+
+            //Skip navigation links to parts of the same page
+            if (href.StartsWith('#'))
             {
-                buffer.EnsureAtLineStart();
-                ConvertChildren(element);
-                buffer.EnsureAtLineStart();
+                return null;
             }
-            else
+
+            //only allow valid, fully qualified URLs
+            try
             {
-                ConvertChildren(element);
+                url = new Uri(BaseUrl, href);
+            }
+            catch (Exception)
+            {
+                url = null;
+            }
+            if (url == null || !url.IsAbsoluteUri)
+            {
+                return null;
+            }
+            //if it points to the current URL, skip it
+            if (url.Equals(BaseUrl))
+            {
+                return null;
+            }
+
+            //ignore JS links, since those won't do anything in a Gemini client
+            if (url.Scheme == "javascript")
+            {
+                return null;
+            }
+
+            if (!AllowDuplicateLinks && bodyLinks.ContainsUrl(url))
+            {
+                return null;
+            }
+            return url;
+        }
+
+        #endregion
+
+        private void ProcessAside(HtmlElement aside)
+        {
+            if (DeferProcessing(aside))
+            {
+                return;
+            }
+            buffer.EnsureAtLineStart();
+            buffer.AppendLine("### Aside");
+            ConvertChildren(aside);
+        }
+
+        private void ProcessBlockQuote(HtmlElement blockQuote)
+        {
+            buffer.EnsureAtLineStart(true);
+            buffer.InBlockquote = true;
+            ConvertChildren(blockQuote);
+            buffer.InBlockquote = false;
+            buffer.EnsureAtLineStart(true);
+        }
+
+        private void ProcessBR(HtmlElement br)
+        {
+            buffer.AppendLine();
+        }
+
+        private void ProcessDD(HtmlElement dd)
+        {
+            buffer.EnsureAtLineStart(true);
+            buffer.SetLinePrefix("* ");
+            ConvertChildren(dd);
+            buffer.EnsureAtLineStart(true);
+        }
+
+        private void ProcessDT(HtmlElement dt)
+        {
+            buffer.EnsureAtLineStart();
+            ConvertChildren(dt);
+            if (!buffer.AtLineStart)
+            {
+                buffer.AppendLine(":");
             }
         }
 
-        private void ProcessFigure(HtmlElement figure)
-            => HandleImage(imageParser.ParseFigure(figure));
+        private void ProcessHeadingLevel(HtmlElement hx)
+        {
+            int level = System.Convert.ToInt32(hx.NodeName.Substring(1, 1));
+            //even though Gemtext doesn't allow for 
+            if(level > 3)
+            {
+                level = 3;
+            }
+            buffer.EnsureAtLineStart(true);
+            buffer.SetLinePrefix("###".Substring(0,level) + " ");
+            ConvertChildren(hx);
+            buffer.EnsureAtLineStart(true);
+        }
 
+        private void ProcessHR(HtmlElement hr)
+        {
+            buffer.EnsureAtLineStart(true);
+            buffer.AppendLine("-=-=-=-=-=-=-=-=-=-=-");
+        }
+
+        #region Italics
+
+        private void ProcessItalics(HtmlElement i)
+        {
+            if (ShouldUseItalics(i))
+            {
+                buffer.Append("\"");
+                ConvertChildren(i);
+                buffer.Append("\"");
+            }
+            else
+            {
+                ConvertChildren(i);
+            }
+
+        }
+
+        //should we use apply italic formatting around this element?
+        private bool ShouldUseItalics(HtmlElement element)
+        {
+            var siblingTag = element.NextElementSibling?.NodeName?.ToLower() ?? "";
+            if (siblingTag == "sub" || siblingTag == "sup")
+            {
+                return false;
+            }
+            //if there is no content, don't enclose it
+            if (element.TextContent.Trim().Length == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region Image Elements (<img>, <figure>)
+
+        private void ProcessFigure(HtmlElement figure)
+          => HandleImage(imageParser.ParseFigure(figure));
 
         private void ProcessImg(IHtmlImageElement img)
             => HandleImage(imageParser.ParseImg(img));
@@ -660,47 +652,12 @@ namespace HtmlToGmi
             }
         }
 
-        private void ProcessLi(HtmlElement li)
-        {
-            var prefix = "* ";
-            if(listDepth > 1)
-            {
-                prefix += "* ";
-            }
-            if(isInOrderedList)
-            {
-                prefix += $"{listItemNumber}. ";
-                listItemNumber++;
-            }
-            buffer.EnsureAtLineStart();
-            buffer.SetLinePrefix(prefix);
-            ConvertChildren(li);
-            buffer.EnsureAtLineStart();
-        }
+        public bool ShouldUseImage(ImageLink image)
+           => (images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
 
-        private void ProcessNav(HtmlElement nav)
-        {
+        #endregion
 
-            if(DeferProcessing(nav))
-            {
-                return;
-            }
-
-            var links = nav.QuerySelectorAll("a")
-                .Where(x => !ShouldSkipElement(x as HtmlElement, "a"));
-            if(links.Count() > 0)
-            {
-                buffer.EnsureAtLineStart();
-                buffer.AppendLine("### Navigation Links");
-                foreach (var anchor in links)
-                {
-                    buffer.EnsureAtLineStart();
-                    ProcessAnchor(anchor as HtmlElement);
-                    FlushLinkBuffer();
-                    buffer.EnsureAtLineStart();
-                }
-            }
-        }
+        #region List elements (<ul> <ol> <li>)
 
         private void ProcessOrderedList(HtmlElement ol)
         {
@@ -722,6 +679,79 @@ namespace HtmlToGmi
             ConvertChildren(element);
             listDepth--;
             buffer.EnsureAtLineStart();
+        }
+
+        private void ProcessLi(HtmlElement li)
+        {
+            var prefix = "* ";
+            if (listDepth > 1)
+            {
+                prefix += "* ";
+            }
+            if (isInOrderedList)
+            {
+                prefix += $"{listItemNumber}. ";
+                listItemNumber++;
+            }
+            buffer.EnsureAtLineStart();
+            buffer.SetLinePrefix(prefix);
+            ConvertChildren(li);
+            buffer.EnsureAtLineStart();
+        }
+
+        #endregion
+
+        private void ProcessNav(HtmlElement nav)
+        {
+
+            if (DeferProcessing(nav))
+            {
+                return;
+            }
+
+            var links = nav.QuerySelectorAll("a")
+                .Where(x => !ShouldSkipElement(x as HtmlElement, "a"));
+            if (links.Count() > 0)
+            {
+                buffer.EnsureAtLineStart();
+                buffer.AppendLine("### Navigation Links");
+                foreach (var anchor in links)
+                {
+                    buffer.EnsureAtLineStart();
+                    ProcessAnchor(anchor as HtmlElement);
+                    FlushLinkBuffer();
+                    buffer.EnsureAtLineStart();
+                }
+            }
+        }
+
+        private void ProcessParagraph(HtmlElement p)
+        {
+            buffer.EnsureAtLineStart();
+            int size = buffer.Content.Length;
+            ConvertChildren(p);
+            //make sure the paragraph ends with a new line
+            buffer.EnsureAtLineStart();
+            if (buffer.Content.Length > size)
+            {
+                //add another blank line if this paragraph had content
+                //if we had links to flush, there already is an empty line so skip
+                if (!FlushLinkBuffer())
+                {
+                    buffer.AppendLine();
+                }
+            }
+        }
+
+        private void ProcessPre(HtmlElement pre)
+        {
+            buffer.EnsureAtLineStart(true);
+            buffer.AppendLine("```");
+            inPreformatted = true;
+            ConvertChildren(pre);
+            buffer.EnsureAtLineStart(true);
+            inPreformatted = false;
+            buffer.AppendLine("```");
         }
 
         private void ProcessSub(HtmlElement element)
@@ -794,8 +824,92 @@ namespace HtmlToGmi
             }
         }
 
-        public bool ShouldUseImage(ImageLink image)
-            => (images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
+        private void ProcessUnderline(HtmlElement u)
+        {
+            buffer.Append("_");
+            ConvertChildren(u);
+            buffer.Append("_");
+        }
+
+        private bool DeferProcessing(HtmlElement element)
+        {
+            if(!isProcessingDeferred)
+            {
+                deferredElements.Add(element);
+                return true;
+            }
+            return false;
+        }
+
+        private void ProcessGenericTag(HtmlElement element)
+        {
+            if (ShouldDisplayAsBlock(element))
+            {
+                buffer.EnsureAtLineStart();
+                ConvertChildren(element);
+                buffer.EnsureAtLineStart();
+            }
+            else
+            {
+                ConvertChildren(element);
+            }
+        }
+
+
+        private bool FlushLinkBuffer()
+        {
+            bool ret = false;
+            if (linkBuffer.Count > 0 && !buffer.InBlockquote)
+            {
+                //need to reset prefix because line must start with link line character
+                buffer.EnsureAtLineStart(true);
+
+                //lets see if the last line is equal to the link text
+                if (CanReplaceLastLine())
+                {
+                    //if so trim the last line
+                    buffer.RemoveLastLine();
+                    ret = true;
+                    var link = linkBuffer[0];
+                    buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.Text}");
+                    linkBuffer.Clear();
+                    //roll back found link counter
+                    linkCounter--;
+                }
+                else
+                {
+                    foreach (var link in linkBuffer)
+                    {
+                        ret = true;
+                        var hostText = "";
+                        if (BaseUrl.Host != link.Url.Host && link.Url.Scheme.StartsWith("http"))
+                        {
+                            hostText = $"({link.Url.Host}) ";
+                        }
+                        buffer.AppendLine($"=> {GetAnchorUrl(link.Url)} {link.OrderDetected}. {hostText}\"{link.Text}\"");
+                    }
+                    buffer.AppendLine();
+                    linkBuffer.Clear();
+                }
+            }
+            return ret;
+        }
+
+        private bool CanReplaceLastLine()
+        {
+            if (linkBuffer.Count != 1)
+            {
+                return false;
+            }
+            var lastLine = buffer.GetLastLine();
+            //bulleted lists can be converted, so trim it off
+            if (lastLine.StartsWith("* ") && lastLine.Length >= 3)
+            {
+                lastLine = lastLine.Substring(2);
+            }
+
+            return lastLine == $"{linkBuffer[0].Text}[{linkBuffer[0].OrderDetected}]";
+        }
 
         public static bool ShouldDisplayAsBlock(HtmlElement element)
         {
@@ -806,49 +920,6 @@ namespace HtmlToGmi
             }
             //its a block, display it as inline?
             return !IsInline(element);
-        }
-
-        private Uri CreateUrl(HtmlElement a)
-        {
-            Uri url = null;
-            var href = a.GetAttribute("href") ?? "";
-
-            //Skip navigation links to parts of the same page
-            if (href.StartsWith('#'))
-            {
-                return null;
-            }
-
-            //only allow valid, fully qualified URLs
-            try
-            {
-                url = new Uri(BaseUrl, href);
-            }
-            catch (Exception)
-            {
-                url = null;
-            }
-            if (url == null || !url.IsAbsoluteUri)
-            {
-                return null;
-            }
-            //if it points to the current URL, skip it
-            if(url.Equals(BaseUrl))
-            {
-                return null;
-            }
-
-            //ignore JS links, since those won't do anything in a Gemini client
-            if(url.Scheme == "javascript")
-            {
-                return null;
-            }
-
-            if (!AllowDuplicateLinks && bodyLinks.ContainsUrl(url))
-            {
-                return null;
-            }
-            return url;
         }
 
         private string GetImageUrl(Uri url)
