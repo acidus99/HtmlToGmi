@@ -19,7 +19,7 @@ namespace HtmlToGmi.Models
 
         public void AddLink(Uri url, string linkText, bool isExternal)
         {
-            string normalized = linkText.ToLower();
+            string normalized = linkText?.ToLower() ?? "";
 
             //does this Url already exist?
             if (!ContainsUrl(url))
@@ -40,7 +40,7 @@ namespace HtmlToGmi.Models
                     });
                 }
             }
-            else if (!seenText.ContainsKey(normalized))
+            else if (linkText.Length > 0 && !seenText.ContainsKey(normalized))
             {
                 //URL already exists, but link text doesn't.
                 //so is this link text "better" that what we are using?
@@ -49,6 +49,14 @@ namespace HtmlToGmi.Models
                     links[url].Text = linkText;
                     seenText.Add(normalized, true);
                 }
+            }
+        }
+
+        public void AddLinks(IEnumerable<Hyperlink> links)
+        {
+            foreach(var link in links)
+            {
+                AddLink(link);
             }
         }
 
