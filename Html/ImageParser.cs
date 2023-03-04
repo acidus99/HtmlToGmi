@@ -159,6 +159,24 @@ namespace HtmlToGmi.Html
             return null;
         }
 
+
+        public static bool IsSpacerImage(IHtmlImageElement img)
+        {
+
+            //we look for >0 because img tags with a specified width/heigh return 0
+            if ((img.DisplayWidth > 0 && img.DisplayWidth < 7) ||
+                (img.DisplayHeight > 0 && img.DisplayHeight < 7))
+            {
+                return true;
+            }
+
+            var src = img.Source?.ToLower() ?? "";
+            if(src.Contains("spacer.") || src.Contains("1x1."))
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }
 

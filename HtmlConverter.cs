@@ -646,7 +646,7 @@ namespace HtmlToGmi
 
         private void ProcessImg(IHtmlImageElement img)
         {
-            if(IsPlaceholderImage(img))
+            if(ImageParser.IsSpacerImage(img))
             {
                 return;
             }
@@ -664,10 +664,7 @@ namespace HtmlToGmi
             }
         }
 
-        private bool IsPlaceholderImage(IHtmlImageElement img)
-            //we look for >0 because img tags with a specified width/heigh return 0
-            => (img.DisplayWidth > 0  && img.DisplayWidth < 5) ||
-                (img.DisplayHeight > 0 && img.DisplayHeight < 5);
+
 
         private bool ShouldRenderImageLink(ImageLink image)
            => (images.Where(x => (x.Source == image.Source)).FirstOrDefault() == null);
