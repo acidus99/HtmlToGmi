@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using AngleSharp.Html.Dom;
@@ -47,15 +48,30 @@ namespace HtmlToGmi.Html
 		/// <returns></returns>
 		public static bool IsLayoutTable(IHtmlTableElement table)
 		{
-			if(table.Rows.Length == 1)
+			//if caption, its a data table
+			if(!string.IsNullOrEmpty(table.Caption?.TextContent ?? ""))
+			{
+				return false;
+			}
+
+            if (table.Rows.Length == 1)
+            {
+                return true;
+            }
+            if (table.Rows.Length <= 3 && table.Rows[0].Cells.Length == 1)
+            {
+                return true;
+            }
+
+            //if any images are inside the table that are image spacers...
+            if (table.QuerySelectorAll("img")
+				.Any(x=> ImageParser.IsSpacerImage(x as IHtmlImageElement)))
 			{
 				return true;
 			}
-			if(table.Rows.Length <= 3 && table.Rows[0].Cells.Length == 1)
-			{
-				return true;
-			}
+
 			return false;
 		}
+
 	}
 }
