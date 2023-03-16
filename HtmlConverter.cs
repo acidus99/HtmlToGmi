@@ -164,7 +164,12 @@ namespace HtmlToGmi
             }
         }
 
-        private IHtmlDocument ParseToDocument(string html)
+        /// <summary>
+        /// Parse artitrary HTML to a table
+        /// </summary>
+        /// <param name="html"></param>
+        /// <returns></returns>
+        public static IHtmlDocument ParseToDocument(string html)
         {
             var context = BrowsingContext.New(Configuration.Default);
             var parser = context.GetService<IHtmlParser>();
@@ -902,13 +907,14 @@ namespace HtmlToGmi
             if (table != null && !buffer.InBlockquote)
             {
                 buffer.EnsureAtLineStart();
-                buffer.Append(TableRenderer.RenderTable(table));
+
+                var renderer = new TableRenderer(table);
+                buffer.Append(renderer.Render());
                 buffer.EnsureAtLineStart();
             }
         }
 
         #endregion
-
 
         private void ProcessUnderline(HtmlElement u)
         {
