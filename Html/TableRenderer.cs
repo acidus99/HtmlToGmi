@@ -6,24 +6,45 @@ namespace HtmlToGmi.Html
 {
     public class TableRenderer
     {
+        public bool RenderCaptionHeading { get; set; } = true;
+
+        public int TableWidth { get; set; } = DefaultTableWidth;
+
+        const int DefaultTableWidth = 60;
+
         int ColumnWidth = 0;
 
         Table Table;
         StringBuilder buffer;
 
-        private TableRenderer(Table table)
+        public TableRenderer(Table table)
         {
             Table = table;
             buffer = new StringBuilder();
         }
 
-        private string Render()
+        public string Render()
         {
+            if (Table.IsEmpty)
+            {
+                return "";
+            }
+
+            FormatContents();
+
             if (Table.HasCaption)
             {
-                buffer.AppendLine($"### Table: {Table.Caption}");
+                if (RenderCaptionHeading)
+                {
+                    buffer.AppendLine($"### Table: {Table.Caption}");
+                }
+                buffer.AppendLine($"```Table: {Table.Caption}");
             }
-            buffer.AppendLine("```Table");
+            else
+            {
+                buffer.AppendLine("```Table");
+            }
+            
             buffer.AppendLine(GenerateDividerLine(Table.Rows[0], true));
 
             for(int i =0; i< Table.Rows.Count; i++)
@@ -81,7 +102,7 @@ namespace HtmlToGmi.Html
 
         private void FormatContents()
         {
-            ColumnWidth = Math.Max((60 / Table.MaxColumns), 15);
+            ColumnWidth = Math.Max((TableWidth / Table.MaxColumns), 15);
 
             foreach (var row in Table.Rows)
             {
@@ -190,16 +211,6 @@ namespace HtmlToGmi.Html
                 cell.FormattedLines.Add(new string(' ', maxWidth));
             }
         }
-
-        public static string RenderTable(Table Table)
-        {
-            if(Table.IsEmpty)
-            {
-                return "";
-            }
-            var renderer = new TableRenderer(Table);
-            renderer.FormatContents();
-            return renderer.Render();
-        }
+               
     }
 }
