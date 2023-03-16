@@ -31,6 +31,17 @@ namespace HtmlToGmi.Html
             };
         }
 
+        public Table ParseTable(string html)
+        {
+            var document = HtmlConverter.ParseToDocument(html);
+
+            var table = document?.QuerySelector("table");
+
+            return (table != null)
+                ? ParseTable(table as HtmlElement) :
+                null;
+        }
+
         public Table ParseTable(HtmlElement element)
         {
             ParseChildren(element);
