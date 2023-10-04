@@ -693,11 +693,11 @@ namespace HtmlToGmi
         private void ProcessList(HtmlElement element)
         {
             //block element
-            buffer.EnsureAtLineStart();
+            buffer.EnsureAtLineStart(true);
             listDepth++;
             ConvertChildren(element);
             listDepth--;
-            buffer.EnsureAtLineStart();
+            buffer.EnsureAtLineStart(true);
         }
 
         private void ProcessLi(HtmlElement li)
