@@ -26,7 +26,7 @@ namespace HtmlToGmi.Html
         /// </summary>
         /// <param name="img"></param>
         /// <returns></returns>
-        public ImageLink ParseImg(IHtmlImageElement img)
+        public ImageLink? ParseImg(IHtmlImageElement img)
         {
             var url = GetImageUrl(img);
             //if we can't get a valid URL, just stop
@@ -92,10 +92,10 @@ namespace HtmlToGmi.Html
         /// <returns></returns>
         private string GetCaptionForImage(IElement img)
         {
-            var caption = img.GetAttribute("alt") ?? "";
+            var caption = img.GetAttribute("alt")?.Trim() ?? "";
             if (string.IsNullOrEmpty(caption))
             {
-                caption = img.GetAttribute("title") ?? "";
+                caption = img.GetAttribute("title")?.Trim() ?? "";
             }
             caption = NormalizeHtmlText(caption);
 

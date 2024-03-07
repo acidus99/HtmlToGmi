@@ -9,6 +9,7 @@ namespace HtmlToGmi
         //the URL of the page we are parsing content from. This is used to properly resolve URLs
         protected Uri BaseUrl;
 
+        //replaces runs of whitespace
         private static readonly Regex whitespace = new Regex(@"\s+", RegexOptions.Compiled);
 
         public AbstractParser(Uri baseUrl = null)
@@ -105,6 +106,7 @@ namespace HtmlToGmi
                 text = text.Replace('\r', ' ');
                 text = text.Replace('\n', ' ');
                 text = whitespace.Replace(text, " ");
+                text = text.Trim();
             }
             return text;
         }
