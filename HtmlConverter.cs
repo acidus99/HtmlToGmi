@@ -658,7 +658,7 @@ namespace HtmlToGmi
             HandleImage(imageParser.ParseImg(img));
         }
 
-        private void HandleImage(ImageLink image)
+        private void HandleImage(ImageLink? image)
         {
             if (image != null && ShouldRenderImageLink(image))
             {
