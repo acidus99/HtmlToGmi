@@ -32,4 +32,10 @@ revisit how I handle DD/DT
 table for layout:
 https://nothings.org/gamedev/thief_rendering.html
 http://www.paulgraham.com
-	
+
+
+
+Link text used on The War Zone and NYTs aren't great.
+	- ideas:
+	- look for H1,H2 tags intisde a link and just use that
+	- even better, what about just using tag +_ children of first element with non-whitespace text nodes?
